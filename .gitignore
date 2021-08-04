@@ -9,9 +9,12 @@ __pycache__/
 !/.gitignore
 
 Numpy_mock_data/
-Pseudodata/
 Numpy_mock_data/*
+Pseudodata/
 Pseudodata/*
+For6sigma/
+For6sigma/*
+
 
 # C extensions
 *.so
