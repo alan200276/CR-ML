@@ -12,6 +12,9 @@ Numpy_mock_data/
 Pseudodata/
 Numpy_mock_data/*
 Pseudodata/*
+For6sigma/
+For6sigma/*
+
 
 # C extensions
 *.so
