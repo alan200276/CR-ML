@@ -314,24 +314,45 @@ class Calculate_Chi_Square:
         Load Experimental Data
         """
         ####################################################################################
-        LiAMS, LiV = np.load("./Exp_Data/Li_AMS2.npy"),np.load("./Exp_Data/Li_Voyager.npy")
+        exp_data_path = "../Data/Exp_Data/"
+
+        LiAMS, LiV = np.load(exp_data_path + "Li_AMS2.npy"),np.load(exp_data_path + "Li_Voyager.npy")
         Li_Eams, Li_Fams, Li_Sams = LiAMS[0], LiAMS[1], LiAMS[2]
         Li_Evy, Li_Fvy, Li_Svy = LiV[0], LiV[1], LiV[2]
-        BeAMS, BeV = np.load("./Exp_Data/Be_AMS2.npy"), np.load("./Exp_Data/Be_Voyager.npy")
+        Li_data = [[Li_Eams, Li_Fams, Li_Sams],[Li_Evy, Li_Fvy, Li_Svy]]
+        Li_name = ["AMS II", "Voyage"]
+        Li_color = ["b","k"]
+
+        BeAMS, BeV = np.load(exp_data_path + "Be_AMS2.npy"), np.load(exp_data_path + "Be_Voyager.npy")
         Be_Eams, Be_Fams, Be_Sams = BeAMS[0], BeAMS[1], BeAMS[2]
         Be_Evy, Be_Fvy, Be_Svy = BeV[0], BeV[1], BeV[2]
-        BAMS, BV, BA = np.load("./Exp_Data/B_AMS2.npy"), np.load("./Exp_Data/B_Voyager.npy"), np.load("./Exp_Data/B_ACE.npy")
+        Be_data = [[Be_Eams, Be_Fams, Be_Sams],[Be_Evy, Be_Fvy, Be_Svy]]
+        Be_name = ["AMS II", "Voyage"]
+        Be_color = ["b","k"]
+
+        BAMS, BV, BA = np.load(exp_data_path + "B_AMS2.npy"), np.load(exp_data_path + "B_Voyager.npy"), np.load(exp_data_path + "B_ACE.npy")
         B_Eams, B_Fams, B_Sams = BAMS[0], BAMS[1], BAMS[2]
         B_Evy, B_Fvy, B_Svy = BV[0], BV[1], BV[2]
         B_Eace,B_Face,B_Sace = BA[0], BA[1], BA[2]
-        CAMS, CV, CA = np.load("./Exp_Data/C_AMS2.npy"), np.load("./Exp_Data/C_Voyager.npy"), np.load("./Exp_Data/C_ACE.npy")
+        B_data = [[B_Eams, B_Fams, B_Sams],[B_Evy, B_Fvy, B_Svy],[B_Eace,B_Face,B_Sace]]
+        B_name = ["AMS II", "Voyage", "ACE"]
+        B_color = ["b","k","m"]
+
+        CAMS, CV, CA = np.load(exp_data_path + "C_AMS2.npy"), np.load(exp_data_path + "C_Voyager.npy"), np.load(exp_data_path + "C_ACE.npy")
         C_Eams, C_Fams, C_Sams = CAMS[0], CAMS[1], CAMS[2]
         C_Evy, C_Fvy, C_Svy = CV[0], CV[1], CV[2]
         C_Eace,C_Face,C_Sace = CA[0], CA[1], CA[2]
-        OAMS, OV, OA = np.load("./Exp_Data/O_AMS2.npy"), np.load("./Exp_Data/O_Voyager.npy"), np.load("./Exp_Data/O_ACE.npy")
+        C_data = [[C_Eams, C_Fams, C_Sams],[C_Evy, C_Fvy, C_Svy],[C_Eace,C_Face,C_Sace]]
+        C_name = ["AMS II", "Voyage", "ACE"]
+        C_color = ["b","k","m"]
+
+        OAMS, OV, OA = np.load(exp_data_path + "O_AMS2.npy"), np.load(exp_data_path + "O_Voyager.npy"), np.load(exp_data_path + "O_ACE.npy")
         O_Eams, O_Fams, O_Sams = OAMS[0], OAMS[1], OAMS[2]
         O_Evy, O_Fvy, O_Svy = OV[0], OV[1], OV[2]
         O_Eace,O_Face,O_Sace = OA[0], OA[1], OA[2]
+        O_data = [[O_Eams, O_Fams, O_Sams],[O_Evy, O_Fvy, O_Svy],[O_Eace,O_Face,O_Sace]]
+        O_name = ["AMS II", "Voyage", "ACE"]
+        O_color = ["b","k","m"]
         ####################################################################################
         # Fit the Spectrum and Calculate Chi-Square
         total_chisq = np.zeros((self.len))
