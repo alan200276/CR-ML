@@ -502,7 +502,7 @@ class ReCalculateAp:
             def interpolate_chisq(P,F,S):
                 return np.round(np.sum(((P-np.array(F))**2)/(np.array(S)**2), axis=1), 10)
             
-            aplist = np.linspace(1.9135/5.,7.0114/5.,120).reshape(120,1)
+            aplist = np.linspace(1.9135/5.,7.0114/5.,500).reshape(500,1)
             norm_interpolate_Li = interpolate.interp1d((E), (Li*aplist), kind='cubic')
             norm_interpolate_Be = interpolate.interp1d((E), (Be*aplist), kind='cubic')
             pred_interpolate_B  = interpolate.interp1d((E), (B*aplist), kind='cubic')
@@ -529,39 +529,12 @@ class ReCalculateAp:
                     )
             
             return np.where(chisq == min(chisq))[0], chisq
-        
-#             chisq = []
-#             for ap in aplist:     
-#                 norm_interpolate_Li = interpolate.interp1d((E), (Li*ap), kind='cubic')
-#                 norm_interpolate_Be = interpolate.interp1d((E), (Be*ap), kind='cubic')
-#                 pred_interpolate_B  = interpolate.interp1d((E), (B*ap), kind='cubic')
-#                 pred_interpolate_C  = interpolate.interp1d((E), (C*ap), kind='cubic')
-#                 norm_interpolate_O  = interpolate.interp1d((E), (O*ap), kind='cubic')
-#                 chisq.append(np.sum((norm_interpolate_Li(Li_Eams)-np.array(Li_Fams))**2/np.array(Li_Sams)**2)+
-#                                   np.sum((norm_interpolate_Li(Li_Evy)-np.array(Li_Fvy))**2/np.array(Li_Svy)**2)+
-
-#                                   np.sum((norm_interpolate_Be(Be_Eams)-np.array(Be_Fams))**2/np.array(Be_Sams)**2)+
-#                                   np.sum((norm_interpolate_Be(Be_Evy)-np.array(Be_Fvy))**2/np.array(Be_Svy)**2)+
-
-#                                   np.sum((pred_interpolate_B(B_Eams)-np.array(B_Fams))**2/np.array(B_Sams)**2)+
-#                                   np.sum((pred_interpolate_B(B_Evy)-np.array(B_Fvy))**2/np.array(B_Svy)**2)+
-#                                   np.sum((pred_interpolate_B(B_Eace)-np.array(B_Face))**2/np.array(B_Sace)**2)+
-
-#                                   np.sum((pred_interpolate_C(C_Eams)-np.array(C_Fams))**2/np.array(C_Sams)**2)+
-#                                   np.sum((pred_interpolate_C(C_Evy)-np.array(C_Fvy))**2/np.array(C_Svy)**2)+
-#                                   np.sum((pred_interpolate_C(C_Eace)-np.array(C_Face))**2/np.array(C_Sace)**2)+
-
-#                                   np.sum((norm_interpolate_O(O_Eams)-np.array(O_Fams))**2/np.array(O_Sams)**2)+
-#                                   np.sum((norm_interpolate_O(O_Evy)-np.array(O_Fvy))**2/np.array(O_Svy)**2)+
-#                                   np.sum((norm_interpolate_O(O_Eace)-np.array(O_Face))**2/np.array(O_Sace)**2)
-#                                  )
-#             return chisq.index(min(chisq)), chisq
 
         logging.info("Finding best Ap")
         logging.info("=====START=====")
         t1 = time.time()
 
-        aplist = np.linspace(1.9135/5.,7.0114/5.,120)
+        aplist = np.linspace(1.9135/5.,7.0114/5.,500)
         ap_5, minchi = [], []
         for i in tqdm(range(self.length)):
             index, chisq = findbestAp(self.E[i],self.Li[i],self.Be[i],self.B[i],self.C[i],self.O[i])
@@ -588,14 +561,14 @@ ReCalculateN
 """        
 class ReCalculateN:
     import time
-    def __init__(self, parameter,data, ap=1,index=0):
+    def __init__(self, parameter,data, ap=1, ap_is1=False):
         self.length = len(data)
         self.data = data
         self.parameter = parameter
         self.E, self.Li, self.Be, self.B, self.C, self.O = data[:,:,0], data[:,:,1],data[:,:,2],data[:,:,3],data[:,:,4],data[:,:,5]
         self.ap = ap
         self.new_factor, self.new_chi = 0, 0
-        self.index = index
+        self.ap_is1 = ap_is1
     
     def GetBestN(self):
         import time
@@ -607,21 +580,27 @@ class ReCalculateN:
         Load Experimental Data
         """
         ####################################################################################
-        LiAMS, LiV = np.load("./Exp_Data/Li_AMS2.npy"),np.load("./Exp_Data/Li_Voyager.npy")
+        exp_data_path = "../Data/Exp_Data/"
+
+        LiAMS, LiV = np.load(exp_data_path + "Li_AMS2.npy"),np.load(exp_data_path + "Li_Voyager.npy")
         Li_Eams, Li_Fams, Li_Sams = LiAMS[0], LiAMS[1], LiAMS[2]
         Li_Evy, Li_Fvy, Li_Svy = LiV[0], LiV[1], LiV[2]
-        BeAMS, BeV = np.load("./Exp_Data/Be_AMS2.npy"), np.load("./Exp_Data/Be_Voyager.npy")
+
+        BeAMS, BeV = np.load(exp_data_path + "Be_AMS2.npy"), np.load(exp_data_path + "Be_Voyager.npy")
         Be_Eams, Be_Fams, Be_Sams = BeAMS[0], BeAMS[1], BeAMS[2]
         Be_Evy, Be_Fvy, Be_Svy = BeV[0], BeV[1], BeV[2]
-        BAMS, BV, BA = np.load("./Exp_Data/B_AMS2.npy"), np.load("./Exp_Data/B_Voyager.npy"), np.load("./Exp_Data/B_ACE.npy")
+
+        BAMS, BV, BA = np.load(exp_data_path + "B_AMS2.npy"), np.load(exp_data_path + "B_Voyager.npy"), np.load(exp_data_path + "B_ACE.npy")
         B_Eams, B_Fams, B_Sams = BAMS[0], BAMS[1], BAMS[2]
         B_Evy, B_Fvy, B_Svy = BV[0], BV[1], BV[2]
         B_Eace,B_Face,B_Sace = BA[0], BA[1], BA[2]
-        CAMS, CV, CA = np.load("./Exp_Data/C_AMS2.npy"), np.load("./Exp_Data/C_Voyager.npy"), np.load("./Exp_Data/C_ACE.npy")
+
+        CAMS, CV, CA = np.load(exp_data_path + "C_AMS2.npy"), np.load(exp_data_path + "C_Voyager.npy"), np.load(exp_data_path + "C_ACE.npy")
         C_Eams, C_Fams, C_Sams = CAMS[0], CAMS[1], CAMS[2]
         C_Evy, C_Fvy, C_Svy = CV[0], CV[1], CV[2]
         C_Eace,C_Face,C_Sace = CA[0], CA[1], CA[2]
-        OAMS, OV, OA = np.load("./Exp_Data/O_AMS2.npy"), np.load("./Exp_Data/O_Voyager.npy"), np.load("./Exp_Data/O_ACE.npy")
+
+        OAMS, OV, OA = np.load(exp_data_path + "O_AMS2.npy"), np.load(exp_data_path + "O_Voyager.npy"), np.load(exp_data_path + "O_ACE.npy")
         O_Eams, O_Fams, O_Sams = OAMS[0], OAMS[1], OAMS[2]
         O_Evy, O_Fvy, O_Svy = OV[0], OV[1], OV[2]
         O_Eace,O_Face,O_Sace = OA[0], OA[1], OA[2]
@@ -629,40 +608,38 @@ class ReCalculateN:
         def findbestN(E,Li,Be,B,C,O,parameter,ap=1):
 
             def interpolate_chisq(P,F,S):
-                return round(np.sum(((P-np.array(F))**2)/(np.array(S)**2)), 5)
+                return np.round(np.sum(((P-np.array(F))**2)/(np.array(S)**2), axis=1), 10)
 
-    #         spectrum_E =  data[:,0]
-    #         spectrum_Li = data[:,1]
-    #         spectrum_Be = data[:,2]
-    #         spectrum_B = data[:,3]
-    #         spectrum_C = data[:,4]
-    #         spectrum_O = data[:,5]
             N_Li = parameter[11]
             N_Be = parameter[12]
             N_O = parameter[13]
-            new_N = np.linspace(0.8,1.2,200)
-
-            chisq_scan_Li, chisq_scan_Be, chisq_scan_O = [], [], []
-            for element in new_N:       
-                pred_interpolate_Li = interpolate.interp1d((E), (Li/N_Li*element*ap), kind='cubic')
-                pred_interpolate_Be = interpolate.interp1d((E), (Be/N_Be*element*ap), kind='cubic')
-                pred_interpolate_O = interpolate.interp1d((E), (O/N_O*element*ap), kind='cubic')
-                chisq_scan_Li.append(interpolate_chisq(P=pred_interpolate_Li(Li_Eams), F=Li_Fams, S=Li_Sams)+
-                                     interpolate_chisq(P=pred_interpolate_Li(Li_Evy), F=Li_Fvy, S=Li_Svy))
-                chisq_scan_Be.append(interpolate_chisq(P=pred_interpolate_Be(Be_Eams), F=Be_Fams, S=Be_Sams)+
-                                     interpolate_chisq(P=pred_interpolate_Be(Be_Evy), F=Be_Fvy, S=Be_Svy))
-                chisq_scan_O.append(interpolate_chisq(P=pred_interpolate_O(O_Eams), F=O_Fams, S=O_Sams)+
-                                    interpolate_chisq(P=pred_interpolate_O(O_Evy), F=O_Fvy, S=O_Svy)+
-                                    interpolate_chisq(P=pred_interpolate_O(O_Eace), F=O_Face, S=O_Sace))
-
+            new_N = np.linspace(0.8,1.2,1000).reshape(1000,1)
+            
+        
+            pred_interpolate_Li = interpolate.interp1d((E), (Li/N_Li*new_N*ap), kind='cubic')
+            pred_interpolate_Be = interpolate.interp1d((E), (Be/N_Be*new_N*ap), kind='cubic')
+            pred_interpolate_O  = interpolate.interp1d((E), (O/N_O*new_N*ap), kind='cubic')
+            chisq_scan_Li = (interpolate_chisq(P=pred_interpolate_Li(Li_Eams), F=Li_Fams, S=Li_Sams)+
+                             interpolate_chisq(P=pred_interpolate_Li(Li_Evy), F=Li_Fvy, S=Li_Svy))
+            
+            chisq_scan_Be = (interpolate_chisq(P=pred_interpolate_Be(Be_Eams), F=Be_Fams, S=Be_Sams)+
+                             interpolate_chisq(P=pred_interpolate_Be(Be_Evy), F=Be_Fvy, S=Be_Svy))
+            chisq_scan_O = (interpolate_chisq(P=pred_interpolate_O(O_Eams), F=O_Fams, S=O_Sams)+
+                            interpolate_chisq(P=pred_interpolate_O(O_Evy), F=O_Fvy, S=O_Svy)+
+                            interpolate_chisq(P=pred_interpolate_O(O_Eace), F=O_Face, S=O_Sace))
+            
             new_normal_factor = np.zeros(3)
-            new_normal_factor[0] = new_N[chisq_scan_Li.index(min(chisq_scan_Li))]
-            new_normal_factor[1] = new_N[chisq_scan_Be.index(min(chisq_scan_Be))]
-            new_normal_factor[2] = new_N[chisq_scan_O.index(min(chisq_scan_O))]
+            new_normal_factor[0] = new_N[np.where(chisq_scan_Li == min(chisq_scan_Li))[0]]
+            new_normal_factor[1] = new_N[np.where(chisq_scan_Be == min(chisq_scan_Be))[0]]
+            new_normal_factor[2] = new_N[np.where(chisq_scan_O == min(chisq_scan_O))[0]]
 
             '''
             Calculate New chisquare
             '''
+            # Change "axis" from 1 to 0
+            def interpolate_chisq(P,F,S):
+                return np.round(np.sum(((P-np.array(F))**2)/(np.array(S)**2), axis=0), 10)
+            
             Li_interpolate = interpolate.interp1d(E, Li/N_Li*new_normal_factor[0]*ap, kind='cubic')
             Be_interpolate = interpolate.interp1d(E, Be/N_Be*new_normal_factor[1]*ap, kind='cubic')
             B_interpolate = interpolate.interp1d(E, B*ap, kind='cubic')
@@ -694,23 +671,28 @@ class ReCalculateN:
 
 
         """
-        Load Mock Data
+        Finding New Normalized Factor
         """   
+        logging.info("Finding New Normalized Factor")
+        logging.info("=====START=====")
+        t1 = time.time()
+        
         ap_5 = self.ap
         new_factor = np.zeros((self.length,3))
         new_chi = np.zeros(self.length)
-        if self.index == 1:
-            for i in range(self.length):
+        
+        if self.ap_is1 == True:
+            for i in tqdm(range(self.length)):
                 new_factor[i,:], new_chi[i] = findbestN(self.E[i], self.Li[i], self.Be[i], self.B[i], self.C[i], self.O[i], self.parameter[i,:])
-                if (i+1)%100 == 0:
-                    logging.info("{} data are finished".format(i+1))
-        elif self.index == 0:
-            for i in range(self.length):
+                
+        elif self.ap_is1 == False:
+            for i in tqdm(range(self.length)):
                 new_factor[i,:], new_chi[i] = findbestN(self.E[i], self.Li[i], self.Be[i], self.B[i], self.C[i], self.O[i], self.parameter[i,:],ap=ap_5[i])
-
-                if (i+1)%100 == 0:
-                    logging.info("{} data are finished".format(i+1))
-
+                
+        t2 = time.time()
+        logging.info("\033[3;33m Time Cost for this Step : {:.4f} min\033[0;m".format((t2-t1)/60.))
+        logging.info("=====Finish=====")
+        
         #######################################################################################################    
         ticks_2 = time.time()
         totaltime =  ticks_2 - ticks_1
