@@ -6,6 +6,7 @@ import random
 import time
 from scipy import interpolate
 import importlib
+from tqdm import tqdm
 import logging
 importlib.reload(logging)
 logging.basicConfig(level = logging.INFO)
@@ -497,43 +498,80 @@ class ReCalculateAp:
         ####################################################################################
 
         def findbestAp(E,Li,Be,B,C,O):
-            aplist = np.linspace(1.9135/5.,7.0114/5.,120)
-            chisq = []
-            for ap in aplist:     
-                norm_interpolate_Li = interpolate.interp1d((E), (Li*ap), kind='cubic')
-                norm_interpolate_Be = interpolate.interp1d((E), (Be*ap), kind='cubic')
-                pred_interpolate_B  = interpolate.interp1d((E), (B*ap), kind='cubic')
-                pred_interpolate_C  = interpolate.interp1d((E), (C*ap), kind='cubic')
-                norm_interpolate_O  = interpolate.interp1d((E), (O*ap), kind='cubic')
-                chisq.append(np.sum((norm_interpolate_Li(Li_Eams)-np.array(Li_Fams))**2/np.array(Li_Sams)**2)+
-                                  np.sum((norm_interpolate_Li(Li_Evy)-np.array(Li_Fvy))**2/np.array(Li_Svy)**2)+
+            
+            def interpolate_chisq(P,F,S):
+                return np.round(np.sum(((P-np.array(F))**2)/(np.array(S)**2), axis=1), 10)
+            
+            aplist = np.linspace(1.9135/5.,7.0114/5.,120).reshape(120,1)
+            norm_interpolate_Li = interpolate.interp1d((E), (Li*aplist), kind='cubic')
+            norm_interpolate_Be = interpolate.interp1d((E), (Be*aplist), kind='cubic')
+            pred_interpolate_B  = interpolate.interp1d((E), (B*aplist), kind='cubic')
+            pred_interpolate_C  = interpolate.interp1d((E), (C*aplist), kind='cubic')
+            norm_interpolate_O  = interpolate.interp1d((E), (O*aplist), kind='cubic')
 
-                                  np.sum((norm_interpolate_Be(Be_Eams)-np.array(Be_Fams))**2/np.array(Be_Sams)**2)+
-                                  np.sum((norm_interpolate_Be(Be_Evy)-np.array(Be_Fvy))**2/np.array(Be_Svy)**2)+
+            chisq = (interpolate_chisq(norm_interpolate_Li(Li_Eams),Li_Fams,Li_Sams)+
+                     interpolate_chisq(norm_interpolate_Li(Li_Evy),Li_Fvy,Li_Svy)+
 
-                                  np.sum((pred_interpolate_B(B_Eams)-np.array(B_Fams))**2/np.array(B_Sams)**2)+
-                                  np.sum((pred_interpolate_B(B_Evy)-np.array(B_Fvy))**2/np.array(B_Svy)**2)+
-                                  np.sum((pred_interpolate_B(B_Eace)-np.array(B_Face))**2/np.array(B_Sace)**2)+
+                     interpolate_chisq(norm_interpolate_Be(Be_Eams),Be_Fams,Be_Sams)+
+                     interpolate_chisq(norm_interpolate_Be(Be_Evy),Be_Fvy,Be_Svy)+
 
-                                  np.sum((pred_interpolate_C(C_Eams)-np.array(C_Fams))**2/np.array(C_Sams)**2)+
-                                  np.sum((pred_interpolate_C(C_Evy)-np.array(C_Fvy))**2/np.array(C_Svy)**2)+
-                                  np.sum((pred_interpolate_C(C_Eace)-np.array(C_Face))**2/np.array(C_Sace)**2)+
+                     interpolate_chisq(pred_interpolate_B(B_Eams),B_Fams,B_Sams)+
+                     interpolate_chisq(pred_interpolate_B(B_Evy),B_Fvy,B_Svy)+
+                     interpolate_chisq(pred_interpolate_B(B_Eace),B_Face,B_Sace)+
 
-                                  np.sum((norm_interpolate_O(O_Eams)-np.array(O_Fams))**2/np.array(O_Sams)**2)+
-                                  np.sum((norm_interpolate_O(O_Evy)-np.array(O_Fvy))**2/np.array(O_Svy)**2)+
-                                  np.sum((norm_interpolate_O(O_Eace)-np.array(O_Face))**2/np.array(O_Sace)**2)
-                                 )
-            return chisq.index(min(chisq)), chisq
+                     interpolate_chisq(pred_interpolate_C(C_Eams),C_Fams,C_Sams)+
+                     interpolate_chisq(pred_interpolate_C(C_Evy),C_Fvy,C_Svy)+
+                     interpolate_chisq(pred_interpolate_C(C_Eace),C_Face,C_Sace)+
 
+                     interpolate_chisq(norm_interpolate_O(O_Eams),O_Fams,O_Sams)+
+                     interpolate_chisq(norm_interpolate_O(O_Evy),O_Fvy,O_Svy)+
+                     interpolate_chisq(norm_interpolate_O(O_Eace),O_Face,O_Sace)
+                    )
+            
+            return np.where(chisq == min(chisq))[0], chisq
+        
+#             chisq = []
+#             for ap in aplist:     
+#                 norm_interpolate_Li = interpolate.interp1d((E), (Li*ap), kind='cubic')
+#                 norm_interpolate_Be = interpolate.interp1d((E), (Be*ap), kind='cubic')
+#                 pred_interpolate_B  = interpolate.interp1d((E), (B*ap), kind='cubic')
+#                 pred_interpolate_C  = interpolate.interp1d((E), (C*ap), kind='cubic')
+#                 norm_interpolate_O  = interpolate.interp1d((E), (O*ap), kind='cubic')
+#                 chisq.append(np.sum((norm_interpolate_Li(Li_Eams)-np.array(Li_Fams))**2/np.array(Li_Sams)**2)+
+#                                   np.sum((norm_interpolate_Li(Li_Evy)-np.array(Li_Fvy))**2/np.array(Li_Svy)**2)+
+
+#                                   np.sum((norm_interpolate_Be(Be_Eams)-np.array(Be_Fams))**2/np.array(Be_Sams)**2)+
+#                                   np.sum((norm_interpolate_Be(Be_Evy)-np.array(Be_Fvy))**2/np.array(Be_Svy)**2)+
+
+#                                   np.sum((pred_interpolate_B(B_Eams)-np.array(B_Fams))**2/np.array(B_Sams)**2)+
+#                                   np.sum((pred_interpolate_B(B_Evy)-np.array(B_Fvy))**2/np.array(B_Svy)**2)+
+#                                   np.sum((pred_interpolate_B(B_Eace)-np.array(B_Face))**2/np.array(B_Sace)**2)+
+
+#                                   np.sum((pred_interpolate_C(C_Eams)-np.array(C_Fams))**2/np.array(C_Sams)**2)+
+#                                   np.sum((pred_interpolate_C(C_Evy)-np.array(C_Fvy))**2/np.array(C_Svy)**2)+
+#                                   np.sum((pred_interpolate_C(C_Eace)-np.array(C_Face))**2/np.array(C_Sace)**2)+
+
+#                                   np.sum((norm_interpolate_O(O_Eams)-np.array(O_Fams))**2/np.array(O_Sams)**2)+
+#                                   np.sum((norm_interpolate_O(O_Evy)-np.array(O_Fvy))**2/np.array(O_Svy)**2)+
+#                                   np.sum((norm_interpolate_O(O_Eace)-np.array(O_Face))**2/np.array(O_Sace)**2)
+#                                  )
+#             return chisq.index(min(chisq)), chisq
+
+        logging.info("Finding best Ap")
+        logging.info("=====START=====")
+        t1 = time.time()
 
         aplist = np.linspace(1.9135/5.,7.0114/5.,120)
         ap_5, minchi = [], []
-        for i in range(self.length):
+        for i in tqdm(range(self.length)):
             index, chisq = findbestAp(self.E[i],self.Li[i],self.Be[i],self.B[i],self.C[i],self.O[i])
             minchi.append(min(chisq))
             ap_5.append(aplist[index])
-            if (i+1)%100 == 0:
-                logging.info("{} data are finished".format(i+1))
+                
+        t2 = time.time()
+        logging.info("\033[3;33m Time Cost for this Step : {:.4f} min\033[0;m".format((t2-t1)/60.))
+        logging.info("=====Finish=====")
+        
         ap_5 = np.array(ap_5)
         minchi = np.array(minchi)
         #######################################################################################################    
