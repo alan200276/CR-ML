@@ -171,63 +171,79 @@ class Create_Pseudodata:
 
             data_delta = np.zeros((84, 8))
             delta = float(np.random.uniform(LOW, HIGH, size=None)) #15, 30
-            for a in range(8):
-                for b in range(84):
-                    data_delta[b,a] = (max(total_data_divAp[:,b,a]) - min(total_data_divAp[:,b,a]))/delta
-
-            j = 0
-            while j != 84:
-                '''
-                pack
-                '''
-    #             spec_data_LiC[i,j] = np.random.uniform(divAp_pack[1,j,0], divAp_pack[0,j,0], size=None)
-    #             spec_data_BeC[i,j] = np.random.uniform(divAp_pack[1,j,1], divAp_pack[0,j,1], size=None)
-    #             spec_data_BC[i,j]  = np.random.uniform(divAp_pack[1,j,2], divAp_pack[0,j,2], size=None)
-    #             spec_data_C[i,j]  = np.random.uniform(divAp_pack[1,j,6], divAp_pack[0,j,6], size=None)
-    #             spec_data_OC[i,j]  = np.random.uniform(divAp_pack[1,j,7], divAp_pack[0,j,7], size=None)
-
-                '''
-                arround one line + Delta_data
-                '''
-                spec_data_LiC[i,j] = np.random.uniform(total_data_divAp[rand,j,0]-data_delta[j,0], total_data_divAp[rand,j,0]+data_delta[j,0], size=None)
-                spec_data_BeC[i,j] = np.random.uniform(total_data_divAp[rand,j,1]-data_delta[j,1], total_data_divAp[rand,j,1]+data_delta[j,1], size=None)
-                spec_data_BC[i,j]  = np.random.uniform(total_data_divAp[rand,j,2]-data_delta[j,2], total_data_divAp[rand,j,2]+data_delta[j,2], size=None)
-                spec_data_C[i,j]  = np.random.uniform(total_data_divAp[rand,j,6]-data_delta[j,6], total_data_divAp[rand,j,6]+data_delta[j,6], size=None)
-                spec_data_OC[i,j]  = np.random.uniform(total_data_divAp[rand,j,7]-data_delta[j,7], total_data_divAp[rand,j,7]+data_delta[j,7], size=None)
-
-    #             spec_data_LiC[i,j] = np.random.uniform(total_data_divAp[rand,j,0]*0.95, total_data_divAp[rand,j,0]*1.05, size=None)
-    #             spec_data_BeC[i,j] = np.random.uniform(total_data_divAp[rand,j,1]*0.95, total_data_divAp[rand,j,1]*1.05, size=None)
-    #             spec_data_BC[i,j]  = np.random.uniform(total_data_divAp[rand,j,2]*0.95, total_data_divAp[rand,j,2]*1.05, size=None)
-    #             spec_data_C[i,j]  = np.random.uniform(total_data_divAp[rand,j,6]*0.95, total_data_divAp[rand,j,6]*1.05, size=None)
-    #             spec_data_OC[i,j]  = np.random.uniform(total_data_divAp[rand,j,7]*0.95, total_data_divAp[rand,j,7]*1.05, size=None)
-
-                '''
-                arround one line 
-                '''
-    #             spec_data_LiC[i,j] = np.random.uniform(total_data_divAp[rand,j,0], total_data_divAp[rand,j,0], size=None)
-    #             spec_data_BeC[i,j] = np.random.uniform(total_data_divAp[rand,j,1], total_data_divAp[rand,j,1], size=None)
-    #             spec_data_BC[i,j]  = np.random.uniform(total_data_divAp[rand,j,2], total_data_divAp[rand,j,2], size=None)
-    #             spec_data_C[i,j]  = np.random.uniform(total_data_divAp[rand,j,6], total_data_divAp[rand,j,6], size=None)
-    #             spec_data_OC[i,j]  = np.random.uniform(total_data_divAp[rand,j,7], total_data_divAp[rand,j,7], size=None)
+            data_delta = (np.max(total_data_divAp[:,:,:], axis=0) - np.min(total_data_divAp[:,:,:], axis=0))/delta
+            
+# OLD            
+#             for a in range(8):
+#                 for b in range(84):
+#                     data_delta[b,a] = (max(total_data_divAp[:,b,a]) - min(total_data_divAp[:,b,a]))/delta
 
 
-    #             if spec_data_LiC[i,j] < divAp_pack[1,j,0] or spec_data_LiC[i,j] > divAp_pack[0,j,0]:
-    #                 j -= 1
-    #             elif spec_data_BeC[i,j] < divAp_pack[1,j,1] or spec_data_BeC[i,j] > divAp_pack[0,j,1]:
-    #                 j -= 1
-    #             elif spec_data_BC[i,j] < divAp_pack[1,j,2] or spec_data_BC[i,j] > divAp_pack[0,j,2]:
-    #                 j -= 1
-    #             elif spec_data_C[i,j] < divAp_pack[1,j,6] or spec_data_C[i,j] > divAp_pack[0,j,6]:
-    #                 j -= 1
-    #             elif spec_data_OC[i,j] < divAp_pack[1,j,7] or spec_data_OC[i,j] > divAp_pack[0,j,7]:
-    #                 j -= 1
-
-                j += 1
+            '''
+            arround one line + Delta_data
+            '''      
+            spec_data_LiC[i,:] = np.random.uniform(total_data_divAp[rand,:,0]-data_delta[:,0], total_data_divAp[rand,:,0]+data_delta[:,0], size=None)
+            spec_data_BeC[i,:] = np.random.uniform(total_data_divAp[rand,:,1]-data_delta[:,1], total_data_divAp[rand,:,1]+data_delta[:,1], size=None)
+            spec_data_BC[i,:]  = np.random.uniform(total_data_divAp[rand,:,2]-data_delta[:,2], total_data_divAp[rand,:,2]+data_delta[:,2], size=None)
+            spec_data_C[i,:]  = np.random.uniform(total_data_divAp[rand,:,6]-data_delta[:,6], total_data_divAp[rand,:,6]+data_delta[:,6], size=None)
+            spec_data_OC[i,:]  = np.random.uniform(total_data_divAp[rand,:,7]-data_delta[:,7], total_data_divAp[rand,:,7]+data_delta[:,7], size=None)
 
 
-    #     Li_norm = np.random.uniform(0.8,1.2,100)
-    #     Be_norm = np.random.uniform(0.8,1.2,100)
-    #     O_norm = np.random.uniform(0.8,1.2,100)
+
+# OLD
+#             j = 0
+#             while j != 84:
+#                 '''
+#                 pack
+#                 '''
+#     #             spec_data_LiC[i,j] = np.random.uniform(divAp_pack[1,j,0], divAp_pack[0,j,0], size=None)
+#     #             spec_data_BeC[i,j] = np.random.uniform(divAp_pack[1,j,1], divAp_pack[0,j,1], size=None)
+#     #             spec_data_BC[i,j]  = np.random.uniform(divAp_pack[1,j,2], divAp_pack[0,j,2], size=None)
+#     #             spec_data_C[i,j]  = np.random.uniform(divAp_pack[1,j,6], divAp_pack[0,j,6], size=None)
+#     #             spec_data_OC[i,j]  = np.random.uniform(divAp_pack[1,j,7], divAp_pack[0,j,7], size=None)
+
+#                 '''
+#                 arround one line + Delta_data
+#                 '''
+#                 spec_data_LiC[i,j] = np.random.uniform(total_data_divAp[rand,j,0]-data_delta[j,0], total_data_divAp[rand,j,0]+data_delta[j,0], size=None)
+#                 spec_data_BeC[i,j] = np.random.uniform(total_data_divAp[rand,j,1]-data_delta[j,1], total_data_divAp[rand,j,1]+data_delta[j,1], size=None)
+#                 spec_data_BC[i,j]  = np.random.uniform(total_data_divAp[rand,j,2]-data_delta[j,2], total_data_divAp[rand,j,2]+data_delta[j,2], size=None)
+#                 spec_data_C[i,j]  = np.random.uniform(total_data_divAp[rand,j,6]-data_delta[j,6], total_data_divAp[rand,j,6]+data_delta[j,6], size=None)
+#                 spec_data_OC[i,j]  = np.random.uniform(total_data_divAp[rand,j,7]-data_delta[j,7], total_data_divAp[rand,j,7]+data_delta[j,7], size=None)
+
+#     #             spec_data_LiC[i,j] = np.random.uniform(total_data_divAp[rand,j,0]*0.95, total_data_divAp[rand,j,0]*1.05, size=None)
+#     #             spec_data_BeC[i,j] = np.random.uniform(total_data_divAp[rand,j,1]*0.95, total_data_divAp[rand,j,1]*1.05, size=None)
+#     #             spec_data_BC[i,j]  = np.random.uniform(total_data_divAp[rand,j,2]*0.95, total_data_divAp[rand,j,2]*1.05, size=None)
+#     #             spec_data_C[i,j]  = np.random.uniform(total_data_divAp[rand,j,6]*0.95, total_data_divAp[rand,j,6]*1.05, size=None)
+#     #             spec_data_OC[i,j]  = np.random.uniform(total_data_divAp[rand,j,7]*0.95, total_data_divAp[rand,j,7]*1.05, size=None)
+
+#                 '''
+#                 arround one line 
+#                 '''
+#     #             spec_data_LiC[i,j] = np.random.uniform(total_data_divAp[rand,j,0], total_data_divAp[rand,j,0], size=None)
+#     #             spec_data_BeC[i,j] = np.random.uniform(total_data_divAp[rand,j,1], total_data_divAp[rand,j,1], size=None)
+#     #             spec_data_BC[i,j]  = np.random.uniform(total_data_divAp[rand,j,2], total_data_divAp[rand,j,2], size=None)
+#     #             spec_data_C[i,j]  = np.random.uniform(total_data_divAp[rand,j,6], total_data_divAp[rand,j,6], size=None)
+#     #             spec_data_OC[i,j]  = np.random.uniform(total_data_divAp[rand,j,7], total_data_divAp[rand,j,7], size=None)
+
+
+#     #             if spec_data_LiC[i,j] < divAp_pack[1,j,0] or spec_data_LiC[i,j] > divAp_pack[0,j,0]:
+#     #                 j -= 1
+#     #             elif spec_data_BeC[i,j] < divAp_pack[1,j,1] or spec_data_BeC[i,j] > divAp_pack[0,j,1]:
+#     #                 j -= 1
+#     #             elif spec_data_BC[i,j] < divAp_pack[1,j,2] or spec_data_BC[i,j] > divAp_pack[0,j,2]:
+#     #                 j -= 1
+#     #             elif spec_data_C[i,j] < divAp_pack[1,j,6] or spec_data_C[i,j] > divAp_pack[0,j,6]:
+#     #                 j -= 1
+#     #             elif spec_data_OC[i,j] < divAp_pack[1,j,7] or spec_data_OC[i,j] > divAp_pack[0,j,7]:
+#     #                 j -= 1
+
+#                 j += 1
+
+
+#     #     Li_norm = np.random.uniform(0.8,1.2,100)
+#     #     Be_norm = np.random.uniform(0.8,1.2,100)
+#     #     O_norm = np.random.uniform(0.8,1.2,100)
 
         t2 = time.time()
         logging.info("\033[3;33m Time Cost for this Step : {:.4f} min\033[0;m".format((t2-t1)/60.))
@@ -348,11 +364,6 @@ class Create_Pseudodata:
                                 interpolate_chisq(P=norm_interpolate_O(O_Eace), F=O_Face, S=O_Sace)
                              )
             
-            t2 = time.time()
-            logging.info("\033[3;33m Time Cost for this Step : {:.4f} min\033[0;m".format((t2-t1)/60.))
-            logging.info("=====Finish=====")
-
-            
             
             if index == 0:
     #             if norm_chisq[i] < min(chi)+15.94: # 1sigma
@@ -387,7 +398,10 @@ class Create_Pseudodata:
         for i in range(6):
             pseudodata[:,:,i] = np.array(pseudodata_tmp)[:,i,:]
 
-
+        t2 = time.time()
+        logging.info("\033[3;33m Time Cost for this Step : {:.4f} min\033[0;m".format((t2-t1)/60.))
+        logging.info("=====Finish=====")
+        logging.info("\n")
         #######################################################################################################    
         ticks_2 = time.time()
         totaltime =  ticks_2 - ticks_1
