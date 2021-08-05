@@ -3,14 +3,18 @@ from sklearn.model_selection import train_test_split
 import random
 import time
 from scipy import interpolate
+import logging
+importlib.reload(logging)
+logging.basicConfig(level = logging.INFO)
+
 
 class Mock_Data_to_NumpyArray:
     def __init__(self, mock_data_file):
         import time
-        print(time.strftime("%a %b %d %H:%M:%S %Y", time.localtime()))
+        logging.info(time.strftime("%a %b %d %H:%M:%S %Y", time.localtime()))
         ticks_1 = time.time()
         #######################################################################################################
-        print("Now loading...")
+        logging.info("Now loading...")
         para_smoothly_raw = []
         data_smoothly_raw = []
         chisq = []
@@ -32,12 +36,12 @@ class Mock_Data_to_NumpyArray:
         parameter = np.array(para_smoothly_raw)
         spectrum = np.array(data_smoothly_raw)
         chisq = np.array(chisq)
-        print("Total data: ",parameter.shape[0])
+        logging.info("Total data: {}".format(parameter.shape[0]))
 
         #######################################################################################################    
         ticks_2 = time.time()
         totaltime =  ticks_2 - ticks_1
-        print("\033[3;33mTime consumption : {:.4f} min\033[0;m".format(totaltime/60.))
+        logging.info("\033[3;33mTime consumption : {:.4f} min\033[0;m".format(totaltime/60.))
         
         self.parameter, self.spectrum, self.chisq = parameter, spectrum, chisq
 
@@ -104,7 +108,7 @@ class Mock_Data_Processing_for_Training:
             
     def spectrum_ratio(self):
         import time
-        print(time.strftime("%a %b %d %H:%M:%S %Y", time.localtime()))
+        logging.info(time.strftime("%a %b %d %H:%M:%S %Y", time.localtime()))
         ticks_1 = time.time()
         #######################################################################################################
         """
@@ -134,7 +138,7 @@ class Mock_Data_Processing_for_Training:
         #######################################################################################################    
         ticks_2 = time.time()
         totaltime =  ticks_2 - ticks_1
-        print("\033[3;33mTime Cost : {:.4f} min\033[0;m".format(totaltime/60.))
+        logging.info("\033[3;33mTime Cost : {:.4f} min\033[0;m".format(totaltime/60.))
         
     def Train_Test_split(self, splitrate = 0.1, split = True):
         from sklearn.model_selection import train_test_split
@@ -143,10 +147,10 @@ class Mock_Data_Processing_for_Training:
         def Apply_Norm(xin, xmin, sc_factor):
             xout=(xin[:]-xmin)/sc_factor
             return xout
-        print(time.strftime("%a %b %d %H:%M:%S %Y", time.localtime()))
+        logging.info(time.strftime("%a %b %d %H:%M:%S %Y", time.localtime()))
         ticks_1 = time.time()
         #######################################################################################################
-        print("\033[3;33m{}\033[0;m".format("Prepare Ratio"))
+        logging.info("\033[3;33m{}\033[0;m".format("Prepare Ratio"))
         self.spectrum_ratio()
         """     
         random split traning sample and test sample, 10% for test
@@ -212,14 +216,14 @@ class Mock_Data_Processing_for_Training:
             source_test[:, i] = Apply_Norm(predict_raw_para[:,j], para_min[i], para_factor[i])
         
 
-        print("Shape for training Input: ", input_train.shape)
-        print("Shape for  testing Input: ", input_test.shape)
-        print("Shape for training Target: ", source_train.shape)
-        print("Shape for  testing Target: ", source_test.shape)
+        logging.info("Shape for training Input: {}".format(input_train.shape))
+        logging.info("Shape for  testing Input: {}".format(input_test.shape))
+        logging.info("Shape for training Target: {}".format(source_train.shape))
+        logging.info("Shape for  testing Target: {}".format(source_test.shape))
         #######################################################################################################    
         ticks_2 = time.time()
         totaltime =  ticks_2 - ticks_1
-        print("\033[3;33mTime Cost : {:.4f} min\033[0;m".format(totaltime/60.))
+        logging.info("\033[3;33mTime Cost : {:.4f} min\033[0;m".format(totaltime/60.))
         
         self.input_train, self.input_test = input_train, input_test
         self.source_train, self.source_test = source_train, source_test
@@ -255,14 +259,14 @@ class Select_Sample:
         elif self.sigma == 6:
             deltachi = 70
         else:
-            print(" ONLY 1 \sigma, 2 \sigma, 3 \sigma, 6 \sigma are available.")
+            logging.info(" ONLY 1 \sigma, 2 \sigma, 3 \sigma, 6 \sigma are available.")
             sys.exit(1)
         total_chisq_list = self.total_chisq_list
         
 #         MIN = 347.73266
 #         MIN = 347.33
 #         MIN = min(min(total_chisq_list),347.73266)
-#         print(MIN)
+#         logging.info(MIN)
         MIN = min(total_chisq_list)
         
         
@@ -280,11 +284,11 @@ class Select_Sample:
                 for j in range(6):
                     data_sigma[count,:,j] = self.data[i,:,j]
                 count +=1
-        print("There are {} data in the {} \sigma region.".format(count,self.sigma))
+        logging.info("There are {} data in the {} \sigma region.".format(count,self.sigma))
         #######################################################################################################
         ticks_2 = time.time()
         totaltime =  ticks_2 - ticks_1
-        print("\033[3;33mTime consumption : {:.4f} min\033[0;m".format(totaltime/60.))
+        logging.info("\033[3;33mTime consumption : {:.4f} min\033[0;m".format(totaltime/60.))
 
         return para_sigma, data_sigma, np.array(chi_sigma)
     
@@ -306,7 +310,7 @@ class Calculate_Chi_Square:
         import time
         def interpolate_chisq(P,F,S):
             return round(np.sum(((P-np.array(F))**2)/(np.array(S)**2)), 5)
-        print(time.strftime("%a %b %d %H:%M:%S %Y", time.localtime()))
+        logging.info(time.strftime("%a %b %d %H:%M:%S %Y", time.localtime()))
         ticks_1 = time.time()
         ######################################################################################################
 
@@ -386,7 +390,7 @@ class Calculate_Chi_Square:
         #######################################################################################################    
         ticks_2 = time.time()
         totaltime =  ticks_2 - ticks_1
-        print("\033[3;33mTime consumption : {:.4f} min\033[0;m".format(totaltime/60.))
+        logging.info("\033[3;33mTime consumption : {:.4f} min\033[0;m".format(totaltime/60.))
         return total_chisq
 
     
@@ -411,7 +415,7 @@ class ReCalculateAp:
         import time
         from scipy import interpolate
         
-        print(time.strftime("%a %b %d %H:%M:%S %Y", time.localtime()))
+        logging.info(time.strftime("%a %b %d %H:%M:%S %Y", time.localtime()))
         ticks_1 = time.time()
         #######################################################################################################
 
@@ -476,13 +480,13 @@ class ReCalculateAp:
             minchi.append(min(chisq))
             ap_5.append(aplist[index])
             if (i+1)%100 == 0:
-                print("{} data are finished".format(i+1))
+                logging.info("{} data are finished".format(i+1))
         ap_5 = np.array(ap_5)
         minchi = np.array(minchi)
         #######################################################################################################    
         ticks_2 = time.time()
         totaltime =  ticks_2 - ticks_1
-        print("\033[3;33mTime Cost : {:.4f} min\033[0;m".format(totaltime/60.))
+        logging.info("\033[3;33mTime Cost : {:.4f} min\033[0;m".format(totaltime/60.))
         
         self.ap_5, self.minchi = ap_5, minchi
         
@@ -500,7 +504,7 @@ class ReCalculateN:
     
     def GetBestN(self):
         import time
-        print(time.strftime("%a %b %d %H:%M:%S %Y", time.localtime()))
+        logging.info(time.strftime("%a %b %d %H:%M:%S %Y", time.localtime()))
         ticks_1 = time.time()
         #######################################################################################################
 
@@ -604,18 +608,18 @@ class ReCalculateN:
             for i in range(self.length):
                 new_factor[i,:], new_chi[i] = findbestN(self.E[i], self.Li[i], self.Be[i], self.B[i], self.C[i], self.O[i], self.parameter[i,:])
                 if (i+1)%100 == 0:
-                    print("{} data are finished".format(i+1))
+                    logging.info("{} data are finished".format(i+1))
         elif self.index == 0:
             for i in range(self.length):
                 new_factor[i,:], new_chi[i] = findbestN(self.E[i], self.Li[i], self.Be[i], self.B[i], self.C[i], self.O[i], self.parameter[i,:],ap=ap_5[i])
 
                 if (i+1)%100 == 0:
-                    print("{} data are finished".format(i+1))
+                    logging.info("{} data are finished".format(i+1))
 
         #######################################################################################################    
         ticks_2 = time.time()
         totaltime =  ticks_2 - ticks_1
-        print("\033[3;33mTime Cost : {:.4f} min\033[0;m".format(totaltime/60.))
+        logging.info("\033[3;33mTime Cost : {:.4f} min\033[0;m".format(totaltime/60.))
         self.new_factor, self.new_chi = new_factor, new_chi
           
           
@@ -629,7 +633,7 @@ class  New_Parameter:
         self.factor = new_factor
         self.parameter = parameter
         
-        print(time.strftime("%a %b %d %H:%M:%S %Y", time.localtime()))
+        logging.info(time.strftime("%a %b %d %H:%M:%S %Y", time.localtime()))
         ticks_1 = time.time()
         #######################################################################################################
         if index == 1 :
@@ -646,7 +650,7 @@ class  New_Parameter:
         #######################################################################################################    
         ticks_2 = time.time()
         totaltime =  ticks_2 - ticks_1
-        print("\033[3;33mTime Cost : {:.4f} min\033[0;m".format(totaltime/60.))
+        logging.info("\033[3;33mTime Cost : {:.4f} min\033[0;m".format(totaltime/60.))
         
         self.new_parameter = new_parameter      
         
@@ -714,7 +718,7 @@ class Create_Pseudodata:
         def interpolate_chisq(P,F,S):
             return round(np.sum(((P-np.array(F))**2)/(np.array(S)**2)), 10)
         
-        print(time.strftime("%a %b %d %H:%M:%S %Y", time.localtime()))
+        logging.info(time.strftime("%a %b %d %H:%M:%S %Y", time.localtime()))
         ticks_1 = time.time()
         #######################################################################################################
         """
@@ -769,7 +773,7 @@ class Create_Pseudodata:
                 divAp_pack[1,j,i] = min(total_data_divAp[:,j,i])
         
         ticks_Search_The_Pack_2 = time.time()
-        print("\033[3;33mTime for Search The Pack of Spectrum : {:.4f} min\033[0;m".format((ticks_Search_The_Pack_2-ticks_Search_The_Pack_1)/60.))
+        logging.info("\033[3;33mTime for Search The Pack of Spectrum : {:.4f} min\033[0;m".format((ticks_Search_The_Pack_2-ticks_Search_The_Pack_1)/60.))
         
         
         '''
@@ -852,7 +856,7 @@ class Create_Pseudodata:
     #     O_norm = np.random.uniform(0.8,1.2,100)
 
         ticks_Pseudodata_2 = time.time()
-        print("\033[3;33mTime for Create Pseudodata : {:.4f} min\033[0;m".format((ticks_Pseudodata_2-ticks_Pseudodata_1)/60.))
+        logging.info("\033[3;33mTime for Create Pseudodata : {:.4f} min\033[0;m".format((ticks_Pseudodata_2-ticks_Pseudodata_1)/60.))
         
         
         ticks_N_1 = time.time()
@@ -905,16 +909,16 @@ class Create_Pseudodata:
             norm_factor[i,13] = O_norm[np.where(chisq_scan_O == min(chisq_scan_O))]
 
 
-        print("Pseudo Normal Factor")
-        print(" {:^4} {:^6} {:^6} {:^6}".format("","Li","Be","O"))
-        print(" {:^4} {:^6} {:^6} {:^6}".format("#",len(norm_factor[:,11]),len(norm_factor[:,12]),len(norm_factor[:,13])))
-        print(" {:^4} {:^4.4f} {:^4.4f} {:^4.4f}".format("Max",max(norm_factor[:,11]),max(norm_factor[:,12]),max(norm_factor[:,13])))
-        print(" {:^4} {:^4.4f} {:^4.4f} {:^4.4f}".format("Min",min(norm_factor[:,11]),min(norm_factor[:,12]),min(norm_factor[:,13])))
-        print(" {:^4} {:^4.4f} {:^4.4f} {:^4.4f}".format("Ave.",np.average(norm_factor[:,11]),np.average(norm_factor[:,12]),np.average(norm_factor[:,13])))
+        logging.info("Pseudo Normal Factor")
+        logging.info(" {:^4} {:^6} {:^6} {:^6}".format("","Li","Be","O"))
+        logging.info(" {:^4} {:^6} {:^6} {:^6}".format("#",len(norm_factor[:,11]),len(norm_factor[:,12]),len(norm_factor[:,13])))
+        logging.info(" {:^4} {:^4.4f} {:^4.4f} {:^4.4f}".format("Max",max(norm_factor[:,11]),max(norm_factor[:,12]),max(norm_factor[:,13])))
+        logging.info(" {:^4} {:^4.4f} {:^4.4f} {:^4.4f}".format("Min",min(norm_factor[:,11]),min(norm_factor[:,12]),min(norm_factor[:,13])))
+        logging.info(" {:^4} {:^4.4f} {:^4.4f} {:^4.4f}".format("Ave.",np.average(norm_factor[:,11]),np.average(norm_factor[:,12]),np.average(norm_factor[:,13])))
         
         
         ticks_N_2 = time.time()
-        print("\033[3;33mTime for N_Li : {:.4f} min\033[0;m".format((ticks_N_2-ticks_N_1)/60.))
+        logging.info("\033[3;33mTime for N_Li : {:.4f} min\033[0;m".format((ticks_N_2-ticks_N_1)/60.))
         
 
         ticks_Recorver_Spectrum_1 = time.time()
@@ -964,7 +968,7 @@ class Create_Pseudodata:
                              )
             
             ticks_Recorver_Spectrum_2 = time.time()
-            print("\033[3;33mTime for Recorver_Spectrum : {:.4f} min\033[0;m".format((ticks_Recorver_Spectrum_2-ticks_Recorver_Spectrum_1)/60.))
+            logging.info("\033[3;33mTime for Recorver_Spectrum : {:.4f} min\033[0;m".format((ticks_Recorver_Spectrum_2-ticks_Recorver_Spectrum_1)/60.))
         
             
             
@@ -1005,7 +1009,7 @@ class Create_Pseudodata:
         #######################################################################################################    
         ticks_2 = time.time()
         totaltime =  ticks_2 - ticks_1
-        print("\033[3;33mTime consumption : {:.4f} min\033[0;m".format(totaltime/60.))
+        logging.info("\033[3;33mTime consumption : {:.4f} min\033[0;m".format(totaltime/60.))
         return normalfactor, pseudodata
         
 #     self.normalfactor = normalfactor
