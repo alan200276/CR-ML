@@ -10,6 +10,9 @@ import logging
 importlib.reload(logging)
 logging.basicConfig(level = logging.INFO)
 
+# for acceleration
+# Ref: http://numba.pydata.org
+from numba import jit
 
 
                     
@@ -28,9 +31,7 @@ class Create_Pseudodata:
         
         self.E, self.Li, self.Be, self.B, self.C, self.O = data[:,:,0], data[:,:,1],data[:,:,2],data[:,:,3],data[:,:,4],data[:,:,5]
         self.index = index
-            
-
-#     def Create_Pseudodata(parameter,data,chi, LOW= 10 , HIGH = 30 , number = 100, index=0):
+        
     def Create_Pseudodata(self):
         data = self.data
         parameter = self.parameter
@@ -49,6 +50,8 @@ class Create_Pseudodata:
         """
         Load Experimental Data
         """
+        logging.info("Experimental data are loading.")
+        logging.info("=====START=====")
         ####################################################################################
         exp_data_path = "../Data/Exp_Data/"
 
@@ -74,6 +77,7 @@ class Create_Pseudodata:
         O_Eams, O_Fams, O_Sams = OAMS[0], OAMS[1], OAMS[2]
         O_Evy, O_Fvy, O_Svy = OV[0], OV[1], OV[2]
         O_Eace,O_Face,O_Sace = OA[0], OA[1], OA[2]
+        logging.info("=====Finish=====")
         ####################################################################################
 
         '''
