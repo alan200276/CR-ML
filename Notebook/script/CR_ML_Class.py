@@ -3,14 +3,20 @@ from sklearn.model_selection import train_test_split
 import random
 import time
 from scipy import interpolate
+import logging
+importlib.reload(logging)
+logging.basicConfig(level = logging.INFO)
 
+"""
+Mock_Data_to_NumpyArray
+"""
 class Mock_Data_to_NumpyArray:
     def __init__(self, mock_data_file):
         import time
-        print(time.strftime("%a %b %d %H:%M:%S %Y", time.localtime()))
+        logging.info(time.strftime("%a %b %d %H:%M:%S %Y", time.localtime()))
         ticks_1 = time.time()
         #######################################################################################################
-        print("Now loading...")
+        logging.info("Now loading...")
         para_smoothly_raw = []
         data_smoothly_raw = []
         chisq = []
@@ -32,18 +38,20 @@ class Mock_Data_to_NumpyArray:
         parameter = np.array(para_smoothly_raw)
         spectrum = np.array(data_smoothly_raw)
         chisq = np.array(chisq)
-        print("Total data: ",parameter.shape[0])
+        logging.info("Total data: {}".format(parameter.shape[0]))
 
         #######################################################################################################    
         ticks_2 = time.time()
         totaltime =  ticks_2 - ticks_1
-        print("\033[3;33mTime consumption : {:.4f} min\033[0;m".format(totaltime/60.))
+        logging.info("\033[3;33mTime consumption : {:.4f} min\033[0;m".format(totaltime/60.))
         
         self.parameter, self.spectrum, self.chisq = parameter, spectrum, chisq
-
+#=========================================================================================================#
         
         
-        
+"""
+Mock_Data_PreProcessing
+"""        
 class Mock_Data_PreProcessing:
     def __init__(self, origin_parameter, new_parameter, spectrum, usedata = False):
         self.len = len(origin_parameter)
@@ -84,8 +92,11 @@ class Mock_Data_PreProcessing:
             data[:,:,i] = spectrumlist[i]
 
         self.data = data
-        
-        
+#=========================================================================================================#        
+   
+"""
+Mock_Data_Processing_for_Training
+"""
 class Mock_Data_Processing_for_Training:
     def __init__(self, parameter, E=0, Li=0, Be=0, B=0, C=0, O=0, data=0, usedata = False):
         self.len = len(parameter)
@@ -104,7 +115,7 @@ class Mock_Data_Processing_for_Training:
             
     def spectrum_ratio(self):
         import time
-        print(time.strftime("%a %b %d %H:%M:%S %Y", time.localtime()))
+        logging.info(time.strftime("%a %b %d %H:%M:%S %Y", time.localtime()))
         ticks_1 = time.time()
         #######################################################################################################
         """
@@ -134,7 +145,7 @@ class Mock_Data_Processing_for_Training:
         #######################################################################################################    
         ticks_2 = time.time()
         totaltime =  ticks_2 - ticks_1
-        print("\033[3;33mTime Cost : {:.4f} min\033[0;m".format(totaltime/60.))
+        logging.info("\033[3;33mTime Cost : {:.4f} min\033[0;m".format(totaltime/60.))
         
     def Train_Test_split(self, splitrate = 0.1, split = True):
         from sklearn.model_selection import train_test_split
@@ -143,10 +154,10 @@ class Mock_Data_Processing_for_Training:
         def Apply_Norm(xin, xmin, sc_factor):
             xout=(xin[:]-xmin)/sc_factor
             return xout
-        print(time.strftime("%a %b %d %H:%M:%S %Y", time.localtime()))
+        logging.info(time.strftime("%a %b %d %H:%M:%S %Y", time.localtime()))
         ticks_1 = time.time()
         #######################################################################################################
-        print("\033[3;33m{}\033[0;m".format("Prepare Ratio"))
+        logging.info("\033[3;33m{}\033[0;m".format("Prepare Ratio"))
         self.spectrum_ratio()
         """     
         random split traning sample and test sample, 10% for test
@@ -212,20 +223,24 @@ class Mock_Data_Processing_for_Training:
             source_test[:, i] = Apply_Norm(predict_raw_para[:,j], para_min[i], para_factor[i])
         
 
-        print("Shape for training Input: ", input_train.shape)
-        print("Shape for  testing Input: ", input_test.shape)
-        print("Shape for training Target: ", source_train.shape)
-        print("Shape for  testing Target: ", source_test.shape)
+        logging.info("Shape for training Input: {}".format(input_train.shape))
+        logging.info("Shape for  testing Input: {}".format(input_test.shape))
+        logging.info("Shape for training Target: {}".format(source_train.shape))
+        logging.info("Shape for  testing Target: {}".format(source_test.shape))
         #######################################################################################################    
         ticks_2 = time.time()
         totaltime =  ticks_2 - ticks_1
-        print("\033[3;33mTime Cost : {:.4f} min\033[0;m".format(totaltime/60.))
+        logging.info("\033[3;33mTime Cost : {:.4f} min\033[0;m".format(totaltime/60.))
         
         self.input_train, self.input_test = input_train, input_test
         self.source_train, self.source_test = source_train, source_test
+#=========================================================================================================#        
+   
+    
         
-        
-        
+"""
+Select_Sample
+"""
 class Select_Sample:
     def __init__(self, parameter, data, total_chisq_list, sigma):
         
@@ -255,14 +270,14 @@ class Select_Sample:
         elif self.sigma == 6:
             deltachi = 70
         else:
-            print(" ONLY 1 \sigma, 2 \sigma, 3 \sigma, 6 \sigma are available.")
+            logging.info(" ONLY 1 \sigma, 2 \sigma, 3 \sigma, 6 \sigma are available.")
             sys.exit(1)
         total_chisq_list = self.total_chisq_list
         
 #         MIN = 347.73266
 #         MIN = 347.33
 #         MIN = min(min(total_chisq_list),347.73266)
-#         print(MIN)
+#         logging.info(MIN)
         MIN = min(total_chisq_list)
         
         
@@ -280,18 +295,21 @@ class Select_Sample:
                 for j in range(6):
                     data_sigma[count,:,j] = self.data[i,:,j]
                 count +=1
-        print("There are {} data in the {} \sigma region.".format(count,self.sigma))
+        logging.info("There are {} data in the {} \sigma region.".format(count,self.sigma))
         #######################################################################################################
         ticks_2 = time.time()
         totaltime =  ticks_2 - ticks_1
-        print("\033[3;33mTime consumption : {:.4f} min\033[0;m".format(totaltime/60.))
+        logging.info("\033[3;33mTime consumption : {:.4f} min\033[0;m".format(totaltime/60.))
 
         return para_sigma, data_sigma, np.array(chi_sigma)
-    
+#=========================================================================================================#        
+       
     
 
     
-
+"""
+Calculate_Chi_Square
+"""
 class Calculate_Chi_Square:
     def __init__(self, E=[0], Li=0, Be=0, B=0, C=0, O=0, data=0, usedata = False):
         
@@ -306,7 +324,7 @@ class Calculate_Chi_Square:
         import time
         def interpolate_chisq(P,F,S):
             return round(np.sum(((P-np.array(F))**2)/(np.array(S)**2)), 5)
-        print(time.strftime("%a %b %d %H:%M:%S %Y", time.localtime()))
+        logging.info(time.strftime("%a %b %d %H:%M:%S %Y", time.localtime()))
         ticks_1 = time.time()
         ######################################################################################################
 
@@ -319,40 +337,25 @@ class Calculate_Chi_Square:
         LiAMS, LiV = np.load(exp_data_path + "Li_AMS2.npy"),np.load(exp_data_path + "Li_Voyager.npy")
         Li_Eams, Li_Fams, Li_Sams = LiAMS[0], LiAMS[1], LiAMS[2]
         Li_Evy, Li_Fvy, Li_Svy = LiV[0], LiV[1], LiV[2]
-        Li_data = [[Li_Eams, Li_Fams, Li_Sams],[Li_Evy, Li_Fvy, Li_Svy]]
-        Li_name = ["AMS II", "Voyage"]
-        Li_color = ["b","k"]
 
         BeAMS, BeV = np.load(exp_data_path + "Be_AMS2.npy"), np.load(exp_data_path + "Be_Voyager.npy")
         Be_Eams, Be_Fams, Be_Sams = BeAMS[0], BeAMS[1], BeAMS[2]
         Be_Evy, Be_Fvy, Be_Svy = BeV[0], BeV[1], BeV[2]
-        Be_data = [[Be_Eams, Be_Fams, Be_Sams],[Be_Evy, Be_Fvy, Be_Svy]]
-        Be_name = ["AMS II", "Voyage"]
-        Be_color = ["b","k"]
 
         BAMS, BV, BA = np.load(exp_data_path + "B_AMS2.npy"), np.load(exp_data_path + "B_Voyager.npy"), np.load(exp_data_path + "B_ACE.npy")
         B_Eams, B_Fams, B_Sams = BAMS[0], BAMS[1], BAMS[2]
         B_Evy, B_Fvy, B_Svy = BV[0], BV[1], BV[2]
         B_Eace,B_Face,B_Sace = BA[0], BA[1], BA[2]
-        B_data = [[B_Eams, B_Fams, B_Sams],[B_Evy, B_Fvy, B_Svy],[B_Eace,B_Face,B_Sace]]
-        B_name = ["AMS II", "Voyage", "ACE"]
-        B_color = ["b","k","m"]
 
         CAMS, CV, CA = np.load(exp_data_path + "C_AMS2.npy"), np.load(exp_data_path + "C_Voyager.npy"), np.load(exp_data_path + "C_ACE.npy")
         C_Eams, C_Fams, C_Sams = CAMS[0], CAMS[1], CAMS[2]
         C_Evy, C_Fvy, C_Svy = CV[0], CV[1], CV[2]
         C_Eace,C_Face,C_Sace = CA[0], CA[1], CA[2]
-        C_data = [[C_Eams, C_Fams, C_Sams],[C_Evy, C_Fvy, C_Svy],[C_Eace,C_Face,C_Sace]]
-        C_name = ["AMS II", "Voyage", "ACE"]
-        C_color = ["b","k","m"]
 
         OAMS, OV, OA = np.load(exp_data_path + "O_AMS2.npy"), np.load(exp_data_path + "O_Voyager.npy"), np.load(exp_data_path + "O_ACE.npy")
         O_Eams, O_Fams, O_Sams = OAMS[0], OAMS[1], OAMS[2]
         O_Evy, O_Fvy, O_Svy = OV[0], OV[1], OV[2]
         O_Eace,O_Face,O_Sace = OA[0], OA[1], OA[2]
-        O_data = [[O_Eams, O_Fams, O_Sams],[O_Evy, O_Fvy, O_Svy],[O_Eace,O_Face,O_Sace]]
-        O_name = ["AMS II", "Voyage", "ACE"]
-        O_color = ["b","k","m"]
         ####################################################################################
         # Fit the Spectrum and Calculate Chi-Square
         total_chisq = np.zeros((self.len))
@@ -386,20 +389,15 @@ class Calculate_Chi_Square:
         #######################################################################################################    
         ticks_2 = time.time()
         totaltime =  ticks_2 - ticks_1
-        print("\033[3;33mTime consumption : {:.4f} min\033[0;m".format(totaltime/60.))
+        logging.info("\033[3;33mTime consumption : {:.4f} min\033[0;m".format(totaltime/60.))
         return total_chisq
-
+#=========================================================================================================#        
+       
     
     
-
-
-# import Mock_Data_Processing_for_Training as MDPfT
-# import Calculate_Chi_Square as CCS
-# import Select_Sample as SS
-
-
-
-
+"""
+ReCalculateAp
+"""
 class ReCalculateAp:
     def __init__(self, data):
         self.length = len(data)
@@ -411,7 +409,7 @@ class ReCalculateAp:
         import time
         from scipy import interpolate
         
-        print(time.strftime("%a %b %d %H:%M:%S %Y", time.localtime()))
+        logging.info(time.strftime("%a %b %d %H:%M:%S %Y", time.localtime()))
         ticks_1 = time.time()
         #######################################################################################################
 
@@ -419,21 +417,27 @@ class ReCalculateAp:
         Load Experimental Data
         """
         ####################################################################################
-        LiAMS, LiV = np.load("./Exp_Data/Li_AMS2.npy"),np.load("./Exp_Data/Li_Voyager.npy")
+        exp_data_path = "../Data/Exp_Data/"
+
+        LiAMS, LiV = np.load(exp_data_path + "Li_AMS2.npy"),np.load(exp_data_path + "Li_Voyager.npy")
         Li_Eams, Li_Fams, Li_Sams = LiAMS[0], LiAMS[1], LiAMS[2]
         Li_Evy, Li_Fvy, Li_Svy = LiV[0], LiV[1], LiV[2]
-        BeAMS, BeV = np.load("./Exp_Data/Be_AMS2.npy"), np.load("./Exp_Data/Be_Voyager.npy")
+
+        BeAMS, BeV = np.load(exp_data_path + "Be_AMS2.npy"), np.load(exp_data_path + "Be_Voyager.npy")
         Be_Eams, Be_Fams, Be_Sams = BeAMS[0], BeAMS[1], BeAMS[2]
         Be_Evy, Be_Fvy, Be_Svy = BeV[0], BeV[1], BeV[2]
-        BAMS, BV, BA = np.load("./Exp_Data/B_AMS2.npy"), np.load("./Exp_Data/B_Voyager.npy"), np.load("./Exp_Data/B_ACE.npy")
+
+        BAMS, BV, BA = np.load(exp_data_path + "B_AMS2.npy"), np.load(exp_data_path + "B_Voyager.npy"), np.load(exp_data_path + "B_ACE.npy")
         B_Eams, B_Fams, B_Sams = BAMS[0], BAMS[1], BAMS[2]
         B_Evy, B_Fvy, B_Svy = BV[0], BV[1], BV[2]
         B_Eace,B_Face,B_Sace = BA[0], BA[1], BA[2]
-        CAMS, CV, CA = np.load("./Exp_Data/C_AMS2.npy"), np.load("./Exp_Data/C_Voyager.npy"), np.load("./Exp_Data/C_ACE.npy")
+
+        CAMS, CV, CA = np.load(exp_data_path + "C_AMS2.npy"), np.load(exp_data_path + "C_Voyager.npy"), np.load(exp_data_path + "C_ACE.npy")
         C_Eams, C_Fams, C_Sams = CAMS[0], CAMS[1], CAMS[2]
         C_Evy, C_Fvy, C_Svy = CV[0], CV[1], CV[2]
         C_Eace,C_Face,C_Sace = CA[0], CA[1], CA[2]
-        OAMS, OV, OA = np.load("./Exp_Data/O_AMS2.npy"), np.load("./Exp_Data/O_Voyager.npy"), np.load("./Exp_Data/O_ACE.npy")
+
+        OAMS, OV, OA = np.load(exp_data_path + "O_AMS2.npy"), np.load(exp_data_path + "O_Voyager.npy"), np.load(exp_data_path + "O_ACE.npy")
         O_Eams, O_Fams, O_Sams = OAMS[0], OAMS[1], OAMS[2]
         O_Evy, O_Fvy, O_Svy = OV[0], OV[1], OV[2]
         O_Eace,O_Face,O_Sace = OA[0], OA[1], OA[2]
@@ -476,17 +480,21 @@ class ReCalculateAp:
             minchi.append(min(chisq))
             ap_5.append(aplist[index])
             if (i+1)%100 == 0:
-                print("{} data are finished".format(i+1))
+                logging.info("{} data are finished".format(i+1))
         ap_5 = np.array(ap_5)
         minchi = np.array(minchi)
         #######################################################################################################    
         ticks_2 = time.time()
         totaltime =  ticks_2 - ticks_1
-        print("\033[3;33mTime Cost : {:.4f} min\033[0;m".format(totaltime/60.))
+        logging.info("\033[3;33mTime Cost : {:.4f} min\033[0;m".format(totaltime/60.))
         
         self.ap_5, self.minchi = ap_5, minchi
-        
-        
+#=========================================================================================================#        
+
+
+"""
+ReCalculateN
+"""        
 class ReCalculateN:
     import time
     def __init__(self, parameter,data, ap=1,index=0):
@@ -500,7 +508,7 @@ class ReCalculateN:
     
     def GetBestN(self):
         import time
-        print(time.strftime("%a %b %d %H:%M:%S %Y", time.localtime()))
+        logging.info(time.strftime("%a %b %d %H:%M:%S %Y", time.localtime()))
         ticks_1 = time.time()
         #######################################################################################################
 
@@ -604,23 +612,26 @@ class ReCalculateN:
             for i in range(self.length):
                 new_factor[i,:], new_chi[i] = findbestN(self.E[i], self.Li[i], self.Be[i], self.B[i], self.C[i], self.O[i], self.parameter[i,:])
                 if (i+1)%100 == 0:
-                    print("{} data are finished".format(i+1))
+                    logging.info("{} data are finished".format(i+1))
         elif self.index == 0:
             for i in range(self.length):
                 new_factor[i,:], new_chi[i] = findbestN(self.E[i], self.Li[i], self.Be[i], self.B[i], self.C[i], self.O[i], self.parameter[i,:],ap=ap_5[i])
 
                 if (i+1)%100 == 0:
-                    print("{} data are finished".format(i+1))
+                    logging.info("{} data are finished".format(i+1))
 
         #######################################################################################################    
         ticks_2 = time.time()
         totaltime =  ticks_2 - ticks_1
-        print("\033[3;33mTime Cost : {:.4f} min\033[0;m".format(totaltime/60.))
+        logging.info("\033[3;33mTime Cost : {:.4f} min\033[0;m".format(totaltime/60.))
         self.new_factor, self.new_chi = new_factor, new_chi
-          
-          
-          
         
+#=========================================================================================================#    
+          
+          
+"""
+New_Parameter
+"""      
 class  New_Parameter:
     import time
     
@@ -629,7 +640,7 @@ class  New_Parameter:
         self.factor = new_factor
         self.parameter = parameter
         
-        print(time.strftime("%a %b %d %H:%M:%S %Y", time.localtime()))
+        logging.info(time.strftime("%a %b %d %H:%M:%S %Y", time.localtime()))
         ticks_1 = time.time()
         #######################################################################################################
         if index == 1 :
@@ -646,11 +657,15 @@ class  New_Parameter:
         #######################################################################################################    
         ticks_2 = time.time()
         totaltime =  ticks_2 - ticks_1
-        print("\033[3;33mTime Cost : {:.4f} min\033[0;m".format(totaltime/60.))
+        logging.info("\033[3;33mTime Cost : {:.4f} min\033[0;m".format(totaltime/60.))
         
         self.new_parameter = new_parameter      
-        
+#=========================================================================================================#  
 
+
+"""
+Recovery
+"""
 class Recovery:
     def __init__(self, prediction):
         self.length = len(prediction)
@@ -679,14 +694,17 @@ class Recovery:
         self.para_recovery = para_recovery  
         self.D,  self.delta, self.Zh, self.va, self.eta = para_recovery[:,0],para_recovery[:,1],para_recovery[:,2],para_recovery[:,3],para_recovery[:,4]
         self.nu1, self.nu2, self.R1, self.nu3, self.R2 = para_recovery[:,5],para_recovery[:,6],para_recovery[:,7],para_recovery[:,8],para_recovery[:,9]
+#=========================================================================================================#  
+
                
             
             
             
 
-            
-###############################################            
-
+                    
+"""
+Create_Pseudodata
+"""
 class Create_Pseudodata:
     def __init__(self, parameter, data, chi, LOW = 10 , HIGH = 30 , number = 100, index=0):
         self.length = len(data)
@@ -714,28 +732,34 @@ class Create_Pseudodata:
         def interpolate_chisq(P,F,S):
             return round(np.sum(((P-np.array(F))**2)/(np.array(S)**2)), 10)
         
-        print(time.strftime("%a %b %d %H:%M:%S %Y", time.localtime()))
+        logging.info(time.strftime("%a %b %d %H:%M:%S %Y", time.localtime()))
         ticks_1 = time.time()
         #######################################################################################################
         """
         Load Experimental Data
         """
         ####################################################################################
-        LiAMS, LiV = np.load("./Exp_Data/Li_AMS2.npy"),np.load("./Exp_Data/Li_Voyager.npy")
+        exp_data_path = "../Data/Exp_Data/"
+
+        LiAMS, LiV = np.load(exp_data_path + "Li_AMS2.npy"),np.load(exp_data_path + "Li_Voyager.npy")
         Li_Eams, Li_Fams, Li_Sams = LiAMS[0], LiAMS[1], LiAMS[2]
         Li_Evy, Li_Fvy, Li_Svy = LiV[0], LiV[1], LiV[2]
-        BeAMS, BeV = np.load("./Exp_Data/Be_AMS2.npy"), np.load("./Exp_Data/Be_Voyager.npy")
+
+        BeAMS, BeV = np.load(exp_data_path + "Be_AMS2.npy"), np.load(exp_data_path + "Be_Voyager.npy")
         Be_Eams, Be_Fams, Be_Sams = BeAMS[0], BeAMS[1], BeAMS[2]
         Be_Evy, Be_Fvy, Be_Svy = BeV[0], BeV[1], BeV[2]
-        BAMS, BV, BA = np.load("./Exp_Data/B_AMS2.npy"), np.load("./Exp_Data/B_Voyager.npy"), np.load("./Exp_Data/B_ACE.npy")
+
+        BAMS, BV, BA = np.load(exp_data_path + "B_AMS2.npy"), np.load(exp_data_path + "B_Voyager.npy"), np.load(exp_data_path + "B_ACE.npy")
         B_Eams, B_Fams, B_Sams = BAMS[0], BAMS[1], BAMS[2]
         B_Evy, B_Fvy, B_Svy = BV[0], BV[1], BV[2]
         B_Eace,B_Face,B_Sace = BA[0], BA[1], BA[2]
-        CAMS, CV, CA = np.load("./Exp_Data/C_AMS2.npy"), np.load("./Exp_Data/C_Voyager.npy"), np.load("./Exp_Data/C_ACE.npy")
+
+        CAMS, CV, CA = np.load(exp_data_path + "C_AMS2.npy"), np.load(exp_data_path + "C_Voyager.npy"), np.load(exp_data_path + "C_ACE.npy")
         C_Eams, C_Fams, C_Sams = CAMS[0], CAMS[1], CAMS[2]
         C_Evy, C_Fvy, C_Svy = CV[0], CV[1], CV[2]
         C_Eace,C_Face,C_Sace = CA[0], CA[1], CA[2]
-        OAMS, OV, OA = np.load("./Exp_Data/O_AMS2.npy"), np.load("./Exp_Data/O_Voyager.npy"), np.load("./Exp_Data/O_ACE.npy")
+
+        OAMS, OV, OA = np.load(exp_data_path + "O_AMS2.npy"), np.load(exp_data_path + "O_Voyager.npy"), np.load(exp_data_path + "O_ACE.npy")
         O_Eams, O_Fams, O_Sams = OAMS[0], OAMS[1], OAMS[2]
         O_Evy, O_Fvy, O_Svy = OV[0], OV[1], OV[2]
         O_Eace,O_Face,O_Sace = OA[0], OA[1], OA[2]
@@ -769,7 +793,7 @@ class Create_Pseudodata:
                 divAp_pack[1,j,i] = min(total_data_divAp[:,j,i])
         
         ticks_Search_The_Pack_2 = time.time()
-        print("\033[3;33mTime for Search The Pack of Spectrum : {:.4f} min\033[0;m".format((ticks_Search_The_Pack_2-ticks_Search_The_Pack_1)/60.))
+        logging.info("\033[3;33mTime for Search The Pack of Spectrum : {:.4f} min\033[0;m".format((ticks_Search_The_Pack_2-ticks_Search_The_Pack_1)/60.))
         
         
         '''
@@ -852,7 +876,7 @@ class Create_Pseudodata:
     #     O_norm = np.random.uniform(0.8,1.2,100)
 
         ticks_Pseudodata_2 = time.time()
-        print("\033[3;33mTime for Create Pseudodata : {:.4f} min\033[0;m".format((ticks_Pseudodata_2-ticks_Pseudodata_1)/60.))
+        logging.info("\033[3;33mTime for Create Pseudodata : {:.4f} min\033[0;m".format((ticks_Pseudodata_2-ticks_Pseudodata_1)/60.))
         
         
         ticks_N_1 = time.time()
@@ -905,16 +929,16 @@ class Create_Pseudodata:
             norm_factor[i,13] = O_norm[np.where(chisq_scan_O == min(chisq_scan_O))]
 
 
-        print("Pseudo Normal Factor")
-        print(" {:^4} {:^6} {:^6} {:^6}".format("","Li","Be","O"))
-        print(" {:^4} {:^6} {:^6} {:^6}".format("#",len(norm_factor[:,11]),len(norm_factor[:,12]),len(norm_factor[:,13])))
-        print(" {:^4} {:^4.4f} {:^4.4f} {:^4.4f}".format("Max",max(norm_factor[:,11]),max(norm_factor[:,12]),max(norm_factor[:,13])))
-        print(" {:^4} {:^4.4f} {:^4.4f} {:^4.4f}".format("Min",min(norm_factor[:,11]),min(norm_factor[:,12]),min(norm_factor[:,13])))
-        print(" {:^4} {:^4.4f} {:^4.4f} {:^4.4f}".format("Ave.",np.average(norm_factor[:,11]),np.average(norm_factor[:,12]),np.average(norm_factor[:,13])))
+        logging.info("Pseudo Normal Factor")
+        logging.info(" {:^4} {:^6} {:^6} {:^6}".format("","Li","Be","O"))
+        logging.info(" {:^4} {:^6} {:^6} {:^6}".format("#",len(norm_factor[:,11]),len(norm_factor[:,12]),len(norm_factor[:,13])))
+        logging.info(" {:^4} {:^4.4f} {:^4.4f} {:^4.4f}".format("Max",max(norm_factor[:,11]),max(norm_factor[:,12]),max(norm_factor[:,13])))
+        logging.info(" {:^4} {:^4.4f} {:^4.4f} {:^4.4f}".format("Min",min(norm_factor[:,11]),min(norm_factor[:,12]),min(norm_factor[:,13])))
+        logging.info(" {:^4} {:^4.4f} {:^4.4f} {:^4.4f}".format("Ave.",np.average(norm_factor[:,11]),np.average(norm_factor[:,12]),np.average(norm_factor[:,13])))
         
         
         ticks_N_2 = time.time()
-        print("\033[3;33mTime for N_Li : {:.4f} min\033[0;m".format((ticks_N_2-ticks_N_1)/60.))
+        logging.info("\033[3;33mTime for N_Li : {:.4f} min\033[0;m".format((ticks_N_2-ticks_N_1)/60.))
         
 
         ticks_Recorver_Spectrum_1 = time.time()
@@ -964,7 +988,7 @@ class Create_Pseudodata:
                              )
             
             ticks_Recorver_Spectrum_2 = time.time()
-            print("\033[3;33mTime for Recorver_Spectrum : {:.4f} min\033[0;m".format((ticks_Recorver_Spectrum_2-ticks_Recorver_Spectrum_1)/60.))
+            logging.info("\033[3;33mTime for Recorver_Spectrum : {:.4f} min\033[0;m".format((ticks_Recorver_Spectrum_2-ticks_Recorver_Spectrum_1)/60.))
         
             
             
@@ -1005,13 +1029,13 @@ class Create_Pseudodata:
         #######################################################################################################    
         ticks_2 = time.time()
         totaltime =  ticks_2 - ticks_1
-        print("\033[3;33mTime consumption : {:.4f} min\033[0;m".format(totaltime/60.))
+        logging.info("\033[3;33mTime consumption : {:.4f} min\033[0;m".format(totaltime/60.))
         return normalfactor, pseudodata
         
 #     self.normalfactor = normalfactor
 #     self.pseudodata = pseudodata
     
-
+#=========================================================================================================#
 
 
 
