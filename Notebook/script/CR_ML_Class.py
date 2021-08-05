@@ -528,7 +528,7 @@ class ReCalculateAp:
                      interpolate_chisq(norm_interpolate_O(O_Eace),O_Face,O_Sace)
                     )
             
-            return np.where(chisq == min(chisq))[0], chisq
+            return np.where(chisq == min(chisq))[0][0], chisq
 
         logging.info("Finding best Ap")
         logging.info("=====START=====")
