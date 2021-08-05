@@ -327,7 +327,8 @@ class Calculate_Chi_Square:
         import time
         
         def interpolate_chisq(P,F,S):
-            return round(np.sum(((P-np.array(F))**2)/(np.array(S)**2)), 5)
+            return np.round(np.sum(((P-np.array(F))**2)/(np.array(S)**2), axis=1), 5)
+        
         
         logging.info(time.strftime("%a %b %d %H:%M:%S %Y", time.localtime()))
         ticks_1 = time.time()
@@ -362,39 +363,53 @@ class Calculate_Chi_Square:
         O_Evy, O_Fvy, O_Svy = OV[0], OV[1], OV[2]
         O_Eace,O_Face,O_Sace = OA[0], OA[1], OA[2]
         ####################################################################################
-        # Fit the Spectrum and Calculate Chi-Square
+        # Fit the Spectrum
+        logging.info("Fit the Spectrum.")
+        logging.info("=====START=====")
+        t1 = time.time()
+        
+        Li_interpolate = interpolate.interp1d((self.E[0]), self.Li, kind='cubic')
+        Be_interpolate = interpolate.interp1d((self.E[0]), self.Be, kind='cubic')
+        B_interpolate = interpolate.interp1d((self.E[0]), self.B, kind='cubic')
+        C_interpolate = interpolate.interp1d((self.E[0]), self.C, kind='cubic')
+        O_interpolate = interpolate.interp1d((self.E[0]), self.O, kind='cubic')
+        t2 = time.time()
+        logging.info("\033[3;33m Time Cost for this Step : {:.4f} min\033[0;m".format((t2-t1)/60.))
+        logging.info("=====Finish=====")
+        
+        
+        # Calculate Chi-Square
+        logging.info("Calculate Chi-Square.")
+        logging.info("=====START=====")
+        t1 = time.time()
         total_chisq = np.zeros((self.len))
-        for i in range(self.len):
-            Li_interpolate = interpolate.interp1d((self.E[0]), self.Li[i], kind='cubic')
-            Be_interpolate = interpolate.interp1d((self.E[0]), self.Be[i], kind='cubic')
-            B_interpolate = interpolate.interp1d((self.E[0]), self.B[i], kind='cubic')
-            C_interpolate = interpolate.interp1d((self.E[0]), self.C[i], kind='cubic')
-            O_interpolate = interpolate.interp1d((self.E[0]), self.O[i], kind='cubic')
+        total_chisq = (
+            interpolate_chisq(P=Li_interpolate(Li_Eams), F=Li_Fams, S=Li_Sams)+
+            interpolate_chisq(P=Li_interpolate(Li_Evy), F=Li_Fvy, S=Li_Svy)+
 
-            total_chisq[i] = (
-                interpolate_chisq(P=Li_interpolate(Li_Eams), F=Li_Fams, S=Li_Sams)+
-                interpolate_chisq(P=Li_interpolate(Li_Evy), F=Li_Fvy, S=Li_Svy)+
+            interpolate_chisq(P=Be_interpolate(Be_Eams), F=Be_Fams, S=Be_Sams)+
+            interpolate_chisq(P=Be_interpolate(Be_Evy), F=Be_Fvy, S=Be_Svy)+
 
-                interpolate_chisq(P=Be_interpolate(Be_Eams), F=Be_Fams, S=Be_Sams)+
-                interpolate_chisq(P=Be_interpolate(Be_Evy), F=Be_Fvy, S=Be_Svy)+
+            interpolate_chisq(P=B_interpolate(B_Eams), F=B_Fams, S=B_Sams)+
+            interpolate_chisq(P=B_interpolate(B_Evy), F=B_Fvy, S=B_Svy)+
+            interpolate_chisq(P=B_interpolate(B_Eace), F=B_Face, S=B_Sace)+
 
-                interpolate_chisq(P=B_interpolate(B_Eams), F=B_Fams, S=B_Sams)+
-                interpolate_chisq(P=B_interpolate(B_Evy), F=B_Fvy, S=B_Svy)+
-                interpolate_chisq(P=B_interpolate(B_Eace), F=B_Face, S=B_Sace)+
+            interpolate_chisq(P=C_interpolate(C_Eams), F=C_Fams, S=C_Sams)+
+            interpolate_chisq(P=C_interpolate(C_Evy), F=C_Fvy, S=C_Svy)+
+            interpolate_chisq(P=C_interpolate(C_Eace), F=C_Face, S=C_Sace)+
 
-                interpolate_chisq(P=C_interpolate(C_Eams), F=C_Fams, S=C_Sams)+
-                interpolate_chisq(P=C_interpolate(C_Evy), F=C_Fvy, S=C_Svy)+
-                interpolate_chisq(P=C_interpolate(C_Eace), F=C_Face, S=C_Sace)+
-
-                interpolate_chisq(P=O_interpolate(O_Eams), F=O_Fams, S=O_Sams)+
-                interpolate_chisq(P=O_interpolate(O_Evy), F=O_Fvy, S=O_Svy)+
-                interpolate_chisq(P=O_interpolate(O_Eace), F=O_Face, S=O_Sace)
-            )
-
+            interpolate_chisq(P=O_interpolate(O_Eams), F=O_Fams, S=O_Sams)+
+            interpolate_chisq(P=O_interpolate(O_Evy), F=O_Fvy, S=O_Svy)+
+            interpolate_chisq(P=O_interpolate(O_Eace), F=O_Face, S=O_Sace)
+        )
+        t2 = time.time()
+        logging.info("\033[3;33m Time Cost for this Step : {:.4f} min\033[0;m".format((t2-t1)/60.))
+        logging.info("=====Finish=====")
+        logging.info("\n")
         #######################################################################################################    
         ticks_2 = time.time()
         totaltime =  ticks_2 - ticks_1
-        logging.info("\033[3;33mTime consumption : {:.4f} min\033[0;m".format(totaltime/60.))
+        logging.info("\033[3;33m Total Time Consumption : {:.4f} min\033[0;m".format(totaltime/60.))
         return total_chisq
 #=========================================================================================================#        
        
