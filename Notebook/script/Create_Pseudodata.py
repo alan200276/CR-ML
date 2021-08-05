@@ -41,6 +41,10 @@ class Create_Pseudodata:
         number = self.number
         index = self.index
         
+        def interpolate_chisq_new(P,F,S):
+            return np.round(np.sum(((P-np.array(F))**2)/(np.array(S)**2), axis=1), 10)
+        
+        # OLD
         def interpolate_chisq(P,F,S):
             return round(np.sum(((P-np.array(F))**2)/(np.array(S)**2)), 10)
         
@@ -250,17 +254,18 @@ class Create_Pseudodata:
         logging.info("=====Finish=====")
         
 
-        Li_norm = np.random.uniform(min(parameter[:,11]),max(parameter[:,11]),100)
-        Be_norm = np.random.uniform(min(parameter[:,12]),max(parameter[:,12]),100)
-        O_norm = np.random.uniform(min(parameter[:,13]),max(parameter[:,13]),100)
-
         '''
         Recorver to (Spectrum)/(Normal Factor)
         '''
         logging.info("Recorver to (Spectrum)/(Normal Factor)")
         logging.info("=====START=====")
         t1 = time.time()
-        
+
+
+        Li_norm = np.random.uniform(min(parameter[:,11]),max(parameter[:,11]),100)
+        Be_norm = np.random.uniform(min(parameter[:,12]),max(parameter[:,12]),100)
+        O_norm = np.random.uniform(min(parameter[:,13]),max(parameter[:,13]),100)
+
         spectrum_E = np.zeros((number,84))
         for i in range(number):
             spectrum_E[i,:] = data[0,:,0]
@@ -270,37 +275,35 @@ class Create_Pseudodata:
         spectrum_C = spec_data_C[:,:]
         spectrum_O = spec_data_OC[:,:]*(spec_data_C[:,]/np.reshape(spec_data_C[:,52],(number,1)))
 
-
         '''
         Determine the Normal Factor for each Pseudodata
         '''
         norm_factor = np.zeros((number,14))
         for i in range(number):
-            chisq_scan_Li = np.zeros((100))
-            chisq_scan_Be = np.zeros((100))
-            chisq_scan_O = np.zeros((100))
-            for j in range(100):
-                pred_interpolate_Li = interpolate.interp1d((spectrum_E[0,:]), (spectrum_Li[i,:]*Li_norm[j]), kind='cubic')
-                pred_interpolate_Be = interpolate.interp1d((spectrum_E[0,:]), (spectrum_Be[i,:]*Be_norm[j]), kind='cubic')
-                pred_interpolate_O = interpolate.interp1d((spectrum_E[0,:]), (spectrum_O[i,:]*O_norm[j]), kind='cubic')
+            chisq_scan_Li = np.zeros((1000))
+            chisq_scan_Be = np.zeros((1000))
+            chisq_scan_O = np.zeros((1000))
 
-                chisq_scan_Li[j] = (interpolate_chisq(pred_interpolate_Li(Li_Eams),Li_Fams,Li_Sams)+
-                                    interpolate_chisq(pred_interpolate_Li(Li_Evy),Li_Fvy,Li_Svy)
-                                   )
+            pred_interpolate_Li = interpolate.interp1d((spectrum_E[0,:]), (spectrum_Li[i,:]*Li_norm.reshape(100,1)), kind='cubic')
+            pred_interpolate_Be = interpolate.interp1d((spectrum_E[0,:]), (spectrum_Be[i,:]*Be_norm.reshape(100,1)), kind='cubic')
+            pred_interpolate_O = interpolate.interp1d((spectrum_E[0,:]), (spectrum_O[i,:]*O_norm.reshape(100,1)), kind='cubic')
 
-                chisq_scan_Be[j] = (interpolate_chisq(pred_interpolate_Be(Be_Eams),Be_Fams,Be_Sams)+
-                                    interpolate_chisq(pred_interpolate_Be(Be_Evy),Be_Fvy,Be_Svy)
-                                   )
+            chisq_scan_Li = (interpolate_chisq_new(pred_interpolate_Li(Li_Eams),Li_Fams,Li_Sams)+
+                                interpolate_chisq_new(pred_interpolate_Li(Li_Evy),Li_Fvy,Li_Svy)
+                               )
 
-                chisq_scan_O[j] = (interpolate_chisq(pred_interpolate_O(O_Eams),O_Fams,O_Sams)+
-                                   interpolate_chisq(pred_interpolate_O(O_Evy),O_Fvy,O_Svy)+
-                                   interpolate_chisq(pred_interpolate_O(O_Eace),O_Face,O_Sace)
-                                  )
+            chisq_scan_Be = (interpolate_chisq_new(pred_interpolate_Be(Be_Eams),Be_Fams,Be_Sams)+
+                                interpolate_chisq_new(pred_interpolate_Be(Be_Evy),Be_Fvy,Be_Svy)
+                               )
+
+            chisq_scan_O = (interpolate_chisq_new(pred_interpolate_O(O_Eams),O_Fams,O_Sams)+
+                               interpolate_chisq_new(pred_interpolate_O(O_Evy),O_Fvy,O_Svy)+
+                               interpolate_chisq_new(pred_interpolate_O(O_Eace),O_Face,O_Sace)
+                              )
 
             norm_factor[i,11] = Li_norm[np.where(chisq_scan_Li == min(chisq_scan_Li))]
             norm_factor[i,12] = Be_norm[np.where(chisq_scan_Be == min(chisq_scan_Be))]
             norm_factor[i,13] = O_norm[np.where(chisq_scan_O == min(chisq_scan_O))]
-
 
         logging.info("Pseudo Normal Factor")
         logging.info(" {:^4} {:^6} {:^6} {:^6}".format("","Li","Be","O"))
@@ -308,11 +311,76 @@ class Create_Pseudodata:
         logging.info(" {:^4} {:^4.4f} {:^4.4f} {:^4.4f}".format("Max",max(norm_factor[:,11]),max(norm_factor[:,12]),max(norm_factor[:,13])))
         logging.info(" {:^4} {:^4.4f} {:^4.4f} {:^4.4f}".format("Min",min(norm_factor[:,11]),min(norm_factor[:,12]),min(norm_factor[:,13])))
         logging.info(" {:^4} {:^4.4f} {:^4.4f} {:^4.4f}".format("Ave.",np.average(norm_factor[:,11]),np.average(norm_factor[:,12]),np.average(norm_factor[:,13])))
-        
-        
+
+
         t2 = time.time()
         logging.info("\033[3;33m Time Cost for this Step : {:.4f} min\033[0;m".format((t2-t1)/60.))
         logging.info("=====Finish=====")
+
+# OLD
+#         '''
+#         Recorver to (Spectrum)/(Normal Factor)
+#         '''
+#         logging.info("Recorver to (Spectrum)/(Normal Factor)")
+#         logging.info("=====START=====")
+#         t1 = time.time()
+        
+#         Li_norm = np.random.uniform(min(parameter[:,11]),max(parameter[:,11]),100)
+#         Be_norm = np.random.uniform(min(parameter[:,12]),max(parameter[:,12]),100)
+#         O_norm = np.random.uniform(min(parameter[:,13]),max(parameter[:,13]),100)
+        
+#         spectrum_E = np.zeros((number,84))
+#         for i in range(number):
+#             spectrum_E[i,:] = data[0,:,0]
+#         spectrum_Li = spec_data_LiC[:,:]*(spec_data_C[:,]/np.reshape(spec_data_C[:,52],(number,1)))
+#         spectrum_Be = spec_data_BeC[:,:]*(spec_data_C[:,]/np.reshape(spec_data_C[:,52],(number,1)))
+#         spectrum_B = spec_data_BC[:,:]*(spec_data_C[:,]/np.reshape(spec_data_C[:,52],(number,1)))
+#         spectrum_C = spec_data_C[:,:]
+#         spectrum_O = spec_data_OC[:,:]*(spec_data_C[:,]/np.reshape(spec_data_C[:,52],(number,1)))
+
+
+#         '''
+#         Determine the Normal Factor for each Pseudodata
+#         '''
+#         norm_factor = np.zeros((number,14))
+#         for i in range(number):
+#             chisq_scan_Li = np.zeros((100))
+#             chisq_scan_Be = np.zeros((100))
+#             chisq_scan_O = np.zeros((100))
+#             for j in range(100):
+#                 pred_interpolate_Li = interpolate.interp1d((spectrum_E[0,:]), (spectrum_Li[i,:]*Li_norm[j]), kind='cubic')
+#                 pred_interpolate_Be = interpolate.interp1d((spectrum_E[0,:]), (spectrum_Be[i,:]*Be_norm[j]), kind='cubic')
+#                 pred_interpolate_O = interpolate.interp1d((spectrum_E[0,:]), (spectrum_O[i,:]*O_norm[j]), kind='cubic')
+
+#                 chisq_scan_Li[j] = (interpolate_chisq(pred_interpolate_Li(Li_Eams),Li_Fams,Li_Sams)+
+#                                     interpolate_chisq(pred_interpolate_Li(Li_Evy),Li_Fvy,Li_Svy)
+#                                    )
+
+#                 chisq_scan_Be[j] = (interpolate_chisq(pred_interpolate_Be(Be_Eams),Be_Fams,Be_Sams)+
+#                                     interpolate_chisq(pred_interpolate_Be(Be_Evy),Be_Fvy,Be_Svy)
+#                                    )
+
+#                 chisq_scan_O[j] = (interpolate_chisq(pred_interpolate_O(O_Eams),O_Fams,O_Sams)+
+#                                    interpolate_chisq(pred_interpolate_O(O_Evy),O_Fvy,O_Svy)+
+#                                    interpolate_chisq(pred_interpolate_O(O_Eace),O_Face,O_Sace)
+#                                   )
+
+#             norm_factor[i,11] = Li_norm[np.where(chisq_scan_Li == min(chisq_scan_Li))]
+#             norm_factor[i,12] = Be_norm[np.where(chisq_scan_Be == min(chisq_scan_Be))]
+#             norm_factor[i,13] = O_norm[np.where(chisq_scan_O == min(chisq_scan_O))]
+
+
+#         logging.info("Pseudo Normal Factor")
+#         logging.info(" {:^4} {:^6} {:^6} {:^6}".format("","Li","Be","O"))
+#         logging.info(" {:^4} {:^6} {:^6} {:^6}".format("#",len(norm_factor[:,11]),len(norm_factor[:,12]),len(norm_factor[:,13])))
+#         logging.info(" {:^4} {:^4.4f} {:^4.4f} {:^4.4f}".format("Max",max(norm_factor[:,11]),max(norm_factor[:,12]),max(norm_factor[:,13])))
+#         logging.info(" {:^4} {:^4.4f} {:^4.4f} {:^4.4f}".format("Min",min(norm_factor[:,11]),min(norm_factor[:,12]),min(norm_factor[:,13])))
+#         logging.info(" {:^4} {:^4.4f} {:^4.4f} {:^4.4f}".format("Ave.",np.average(norm_factor[:,11]),np.average(norm_factor[:,12]),np.average(norm_factor[:,13])))
+        
+        
+#         t2 = time.time()
+#         logging.info("\033[3;33m Time Cost for this Step : {:.4f} min\033[0;m".format((t2-t1)/60.))
+#         logging.info("=====Finish=====")
 
         
         '''
