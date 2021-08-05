@@ -53,9 +53,9 @@ class Mock_Data_to_NumpyArray:
         
         
 """
-Mock_Data_PreProcessing
+Mock_Data_Rescale
 """        
-class Mock_Data_PreProcessing:
+class Mock_Data_Rescale:
     def __init__(self, origin_parameter, new_parameter, spectrum, usedata = False):
         self.len = len(origin_parameter)
 
@@ -98,9 +98,9 @@ class Mock_Data_PreProcessing:
 #=========================================================================================================#        
    
 """
-Mock_Data_Processing_for_Training
+Mock_Data_Processing
 """
-class Mock_Data_Processing_for_Training:
+class Mock_Data_Processing:
     def __init__(self, parameter, E=0, Li=0, Be=0, B=0, C=0, O=0, data=0, usedata = False):
         self.len = len(parameter)
         self.E, self.Li, self.Be, self.B, self.C, self.O = E, Li, Be, B, C, O
@@ -116,30 +116,48 @@ class Mock_Data_Processing_for_Training:
             self.E, self.Li, self.Be, self.B, self.C, self.O = data[:,:,0], data[:,:,1],data[:,:,2],data[:,:,3],data[:,:,4],data[:,:,5]
         
             
-    def spectrum_ratio(self):
+    def spectrum_ratio(self, mock = True):
         import time
         logging.info(time.strftime("%a %b %d %H:%M:%S %Y", time.localtime()))
         ticks_1 = time.time()
         #######################################################################################################
-        """
+        '''
         Whitening
-        """
+        '''
+        logging.info("Whitening")
+        logging.info("=====START=====")
+        t1 = time.time()
+        
         total_data_in_ratio = np.zeros((self.len, 84, 8))
-        for i in range(self.len):
-            total_data_in_ratio[i,:,0] = (self.Li[i,:]/self.NLi[i])/(self.C[i,:]/self.C[i,52]) # Li/C
-            total_data_in_ratio[i,:,1] = (self.Be[i,:]/self.NBe[i])/(self.C[i,:]/self.C[i,52]) # Be/C
-            total_data_in_ratio[i,:,2] =  self.B[i,:]/(self.C[i,:]/self.C[i,52]) # B/C
+        C_109_5 = self.C[:,52].reshape(self.len,1)
+        N_Li = self.NLi.reshape(self.len,1)
+        N_Be = self.NBe.reshape(self.len,1)
+        N_O = self.NO.reshape(self.len,1)
+        
+        total_data_in_ratio[:,:,0] = (self.Li/N_Li)/(self.C/C_109_5) # (Li/N_Li)/(C/C_109.5)
+        total_data_in_ratio[:,:,1] = (self.Be/N_Be)/(self.C/C_109_5) # (Be/N_Be)/(C/C_109.5)
+        total_data_in_ratio[:,:,2] = self.B/(self.C/C_109_5) # B/(C/C_109.5)
 
-            total_data_in_ratio[i,:,3] = (self.Li[i,:]/self.NLi[i])/(self.O[i,:]/self.NO[i]) # Li/O
-            total_data_in_ratio[i,:,4] = (self.Be[i,:]/self.NBe[i])/(self.O[i,:]/self.NO[i]) # Be/O
-            total_data_in_ratio[i,:,5] = self.B[i,:]/(self.O[i,:]/self.NO[i]) # B/O
+        total_data_in_ratio[:,:,3] = (self.Li/N_Li)/(self.O/N_O) # (Li/N_Li)/(O/N_O)
+        total_data_in_ratio[:,:,4] = (self.Be/N_Be)/(self.O/N_O) # (Be/N_Be)/(O/N_O)
+        total_data_in_ratio[:,:,5] = self.B/(self.O/N_O) # B/(O/N_O)
 
-            total_data_in_ratio[i,:,6] = self.C[i,:]/self.C[i,52] # C/C_109.5
-            total_data_in_ratio[i,:,7] = (self.O[i,:]/self.NO[i])/self.C[i,52] # O/C_109.5
-#             """for pseudo data"""
-#             total_data_in_ratio[i,:,6] = self.C[i,:] # C/
-#             total_data_in_ratio[i,:,7] = (self.O[i,:]/self.NO[i])/(self.C[i,:]/self.C[i,52]) # O/C
-            
+        if mock:
+            total_data_in_ratio[:,:,6] = self.C/C_109_5 # C/C_109.5
+            total_data_in_ratio[:,:,7] = (self.O/N_O)/C_109_5  # (O/N_O)/C_109.5
+
+        if not mock:
+            """for pseudo data"""
+            total_data_in_ratio[i,:,6] = self.C[i,:] # C
+            total_data_in_ratio[i,:,7] = (self.O[:,:]/N_O)/(self.C[:,:]/C_109_5) # (O/N_O)/(C/C_109.5)
+
+
+        
+        t2 = time.time()
+        logging.info("\033[3;33m Time Cost for this Step : {:.4f} min\033[0;m".format((t2-t1)/60.))
+        logging.info("=====Finish=====")
+
+
         self.LiC, self.BeC, self.BC = total_data_in_ratio[:,:,0], total_data_in_ratio[:,:,1], total_data_in_ratio[:,:,2]
         self.LiO, self.BeO, self.BO = total_data_in_ratio[:,:,3], total_data_in_ratio[:,:,4], total_data_in_ratio[:,:,5]
         self.CC_110, self.OC = total_data_in_ratio[:,:,6], total_data_in_ratio[:,:,7]
@@ -149,6 +167,9 @@ class Mock_Data_Processing_for_Training:
         ticks_2 = time.time()
         totaltime =  ticks_2 - ticks_1
         logging.info("\033[3;33mTime Cost : {:.4f} min\033[0;m".format(totaltime/60.))
+        
+        
+        
         
     def Train_Test_split(self, splitrate = 0.1, split = True):
         from sklearn.model_selection import train_test_split
@@ -165,10 +186,17 @@ class Mock_Data_Processing_for_Training:
         """     
         random split traning sample and test sample, 10% for test
         """
+        logging.info("random split traning sample and test sample, 10% for test")
+        logging.info("=====START=====")
+        t1 = time.time()
         if split == True:
             ran = random.randint(0,100000)
-            train_raw, predict_raw, train_raw_para, predict_raw_para = train_test_split(self.total_data_in_ratio, self.parameter, test_size=splitrate,
-                                                random_state = np.random.seed(ran), shuffle = True )
+            splitting = train_test_split(self.total_data_in_ratio, self.parameter, test_size=splitrate, random_state = np.random.seed(ran), shuffle = True )
+            train_raw, predict_raw = splitting[0], splitting[1]  
+            train_raw_para, predict_raw_para = splitting[2], splitting[3]
+            
+            
+            
         elif split == False:
             train_raw = self.total_data_in_ratio
             train_raw_para = self.parameter
@@ -177,6 +205,9 @@ class Mock_Data_Processing_for_Training:
         
         train_height, predict_height = train_raw.shape[0], predict_raw.shape[0]
         
+        t2 = time.time()
+        logging.info("\033[3;33m Time Cost for this Step : {:.4f} min\033[0;m".format((t2-t1)/60.))
+        logging.info("=====Finish=====")
 
         """
         Normolize every spectrum and take log_{10}
