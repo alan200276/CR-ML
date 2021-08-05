@@ -145,7 +145,9 @@ class Mock_Data_Processing:
         if mock:
             total_data_in_ratio[:,:,6] = self.C/C_109_5 # C/C_109.5
             total_data_in_ratio[:,:,7] = (self.O/N_O)/C_109_5  # (O/N_O)/C_109.5
-
+        """
+        Needo to Check
+        """
         if not mock:
             """for pseudo data"""
             total_data_in_ratio[i,:,6] = self.C[i,:] # C
