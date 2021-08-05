@@ -1,8 +1,11 @@
+#!/usr/bin/python3
+
 import numpy as np
 from sklearn.model_selection import train_test_split
 import random
 import time
 from scipy import interpolate
+import importlib
 import logging
 importlib.reload(logging)
 logging.basicConfig(level = logging.INFO)
@@ -322,8 +325,10 @@ class Calculate_Chi_Square:
     def chi_square(self):
         from scipy import interpolate
         import time
+        
         def interpolate_chisq(P,F,S):
             return round(np.sum(((P-np.array(F))**2)/(np.array(S)**2)), 5)
+        
         logging.info(time.strftime("%a %b %d %H:%M:%S %Y", time.localtime()))
         ticks_1 = time.time()
         ######################################################################################################
@@ -717,9 +722,7 @@ class Create_Pseudodata:
         
         self.E, self.Li, self.Be, self.B, self.C, self.O = data[:,:,0], data[:,:,1],data[:,:,2],data[:,:,3],data[:,:,4],data[:,:,5]
         self.index = index
-            
-
-#     def Create_Pseudodata(parameter,data,chi, LOW= 10 , HIGH = 30 , number = 100, index=0):
+        
     def Create_Pseudodata(self):
         data = self.data
         parameter = self.parameter
@@ -730,7 +733,7 @@ class Create_Pseudodata:
         index = self.index
         
         def interpolate_chisq(P,F,S):
-            return round(np.sum(((P-np.array(F))**2)/(np.array(S)**2)), 10)
+            return np.round(np.sum(((P-np.array(F))**2)/(np.array(S)**2), axis=1), 10)
         
         logging.info(time.strftime("%a %b %d %H:%M:%S %Y", time.localtime()))
         ticks_1 = time.time()
@@ -738,6 +741,9 @@ class Create_Pseudodata:
         """
         Load Experimental Data
         """
+        logging.info("Experimental data are loading.")
+        logging.info("=====START=====")
+        t1 = time.time()
         ####################################################################################
         exp_data_path = "../Data/Exp_Data/"
 
@@ -763,43 +769,64 @@ class Create_Pseudodata:
         O_Eams, O_Fams, O_Sams = OAMS[0], OAMS[1], OAMS[2]
         O_Evy, O_Fvy, O_Svy = OV[0], OV[1], OV[2]
         O_Eace,O_Face,O_Sace = OA[0], OA[1], OA[2]
+        t2 = time.time()
+        logging.info("\033[3;33m Time Cost for this Step : {:.4f} min\033[0;m".format((t2-t1)/60.))
+        logging.info("=====Finish=====")
         ####################################################################################
 
         '''
         Using whitening data to make pseudodata
         '''
         ####################################################################################
+        logging.info("Using whitening data to make pseudodata")
+        logging.info("=====START=====")
+        t1 = time.time()
+        
         total_data_divAp = np.zeros((data.shape[0], 84, 8))
-        for i in range(data.shape[0]):
-            total_data_divAp[i,:,0] = (data[i,:,1]/parameter[i,11])/(data[i,:,4]/data[i,52,4]) # (Li/N_Li)/(C/C_109.5)
-            total_data_divAp[i,:,1] = (data[i,:,2]/parameter[i,12])/(data[i,:,4]/data[i,52,4]) # (Be/N_Be)/(C/C_109.5)
-            total_data_divAp[i,:,2] = data[i,:,3]/(data[i,:,4]/data[i,52,4]) # B/(C/C_109.5)
+        
+        C_109_5 = data[:,52,4].reshape(data.shape[0],1)
+        N_Li = parameter[:,11].reshape(data.shape[0],1)
+        N_Be = parameter[:,12].reshape(data.shape[0],1)
+        N_O = parameter[:,13].reshape(data.shape[0],1)
+        
+        total_data_divAp[:,:,0] = (data[:,:,1]/N_Li)/(data[:,:,4]/C_109_5) # (Li/N_Li)/(C/C_109.5)
+        total_data_divAp[:,:,1] = (data[:,:,2]/N_Be)/(data[:,:,4]/C_109_5) # (Be/N_Be)/(C/C_109.5)
+        total_data_divAp[:,:,2] = data[:,:,3]/(data[:,:,4]/C_109_5) # B/(C/C_109.5)
 
-            total_data_divAp[i,:,3] = (data[i,:,1]/parameter[i,11])/(data[i,:,5]/parameter[i,13]) # (Li/N_Li)/(O/N_O)
-            total_data_divAp[i,:,4] = (data[i,:,2]/parameter[i,12])/(data[i,:,5]/parameter[i,13]) # (Be/N_Be)/(O/N_O)
-            total_data_divAp[i,:,5] = data[i,:,3]/(data[i,:,5]/parameter[i,13]) # B/(O/N_O)
+        total_data_divAp[:,:,3] = (data[:,:,1]/N_Li)/(data[:,:,5]/N_O) # (Li/N_Li)/(O/N_O)
+        total_data_divAp[:,:,4] = (data[:,:,2]/N_Be)/(data[:,:,5]/N_O) # (Be/N_Be)/(O/N_O)
+        total_data_divAp[:,:,5] = data[:,:,3]/(data[:,:,5]/N_O) # B/(O/N_O)
 
-            total_data_divAp[i,:,6] = data[i,:,4] # C
-            total_data_divAp[i,:,7] = (data[i,:,5]/parameter[i,13])/(data[i,:,4]/data[i,52,4])  # (O/N_O)/(C/C_109.5)
+        total_data_divAp[:,:,6] = data[:,:,4] # C
+        total_data_divAp[:,:,7] = (data[:,:,5]/N_O)/(data[:,:,4]/C_109_5)  # (O/N_O)/(C/C_109.5)
+        
+        t2 = time.time()
+        logging.info("\033[3;33m Time Cost for this Step : {:.4f} min\033[0;m".format((t2-t1)/60.))
+        logging.info("=====Finish=====")
         ####################################################################################
-        ticks_Search_The_Pack_1 = time.time()
         '''
         Search The Pack of Spectrum
         '''
+        logging.info("Search The Pack of Spectrum")
+        logging.info("=====START=====")
+        t1 = time.time()
         divAp_pack = np.zeros((2, 84, 8))
-        for i in range(8):
-            for j in range(84):
-                divAp_pack[0,j,i] = max(total_data_divAp[:,j,i])
-                divAp_pack[1,j,i] = min(total_data_divAp[:,j,i])
-        
-        ticks_Search_The_Pack_2 = time.time()
-        logging.info("\033[3;33mTime for Search The Pack of Spectrum : {:.4f} min\033[0;m".format((ticks_Search_The_Pack_2-ticks_Search_The_Pack_1)/60.))
+        divAp_pack[0,:,:] = np.max(total_data_divAp[:,:,:], axis=0)
+        divAp_pack[1,:,:] = np.min(total_data_divAp[:,:,:], axis=0) 
+    
+                
+        t2 = time.time()
+        logging.info("\033[3;33m Time Cost for this Step : {:.4f} min\033[0;m".format((t2-t1)/60.))
+        logging.info("=====Finish=====")
+
         
         
         '''
         Create Pseudodata
         '''
-        ticks_Pseudodata_1 = time.time()
+        logging.info("Create Pseudodata")
+        logging.info("=====START=====")
+        t1 = time.time()
         
         spec_data_LiC = np.zeros((number,84))
         spec_data_BeC = np.zeros((number,84))
@@ -817,77 +844,73 @@ class Create_Pseudodata:
 
             data_delta = np.zeros((84, 8))
             delta = float(np.random.uniform(LOW, HIGH, size=None)) #15, 30
-            for a in range(8):
-                for b in range(84):
-                    data_delta[b,a] = (max(total_data_divAp[:,b,a]) - min(total_data_divAp[:,b,a]))/delta
-
-            j = 0
-            while j != 84:
-                '''
-                pack
-                '''
-    #             spec_data_LiC[i,j] = np.random.uniform(divAp_pack[1,j,0], divAp_pack[0,j,0], size=None)
-    #             spec_data_BeC[i,j] = np.random.uniform(divAp_pack[1,j,1], divAp_pack[0,j,1], size=None)
-    #             spec_data_BC[i,j]  = np.random.uniform(divAp_pack[1,j,2], divAp_pack[0,j,2], size=None)
-    #             spec_data_C[i,j]  = np.random.uniform(divAp_pack[1,j,6], divAp_pack[0,j,6], size=None)
-    #             spec_data_OC[i,j]  = np.random.uniform(divAp_pack[1,j,7], divAp_pack[0,j,7], size=None)
-
-                '''
-                arround one line + Delta_data
-                '''
-                spec_data_LiC[i,j] = np.random.uniform(total_data_divAp[rand,j,0]-data_delta[j,0], total_data_divAp[rand,j,0]+data_delta[j,0], size=None)
-                spec_data_BeC[i,j] = np.random.uniform(total_data_divAp[rand,j,1]-data_delta[j,1], total_data_divAp[rand,j,1]+data_delta[j,1], size=None)
-                spec_data_BC[i,j]  = np.random.uniform(total_data_divAp[rand,j,2]-data_delta[j,2], total_data_divAp[rand,j,2]+data_delta[j,2], size=None)
-                spec_data_C[i,j]  = np.random.uniform(total_data_divAp[rand,j,6]-data_delta[j,6], total_data_divAp[rand,j,6]+data_delta[j,6], size=None)
-                spec_data_OC[i,j]  = np.random.uniform(total_data_divAp[rand,j,7]-data_delta[j,7], total_data_divAp[rand,j,7]+data_delta[j,7], size=None)
-
-    #             spec_data_LiC[i,j] = np.random.uniform(total_data_divAp[rand,j,0]*0.95, total_data_divAp[rand,j,0]*1.05, size=None)
-    #             spec_data_BeC[i,j] = np.random.uniform(total_data_divAp[rand,j,1]*0.95, total_data_divAp[rand,j,1]*1.05, size=None)
-    #             spec_data_BC[i,j]  = np.random.uniform(total_data_divAp[rand,j,2]*0.95, total_data_divAp[rand,j,2]*1.05, size=None)
-    #             spec_data_C[i,j]  = np.random.uniform(total_data_divAp[rand,j,6]*0.95, total_data_divAp[rand,j,6]*1.05, size=None)
-    #             spec_data_OC[i,j]  = np.random.uniform(total_data_divAp[rand,j,7]*0.95, total_data_divAp[rand,j,7]*1.05, size=None)
-
-                '''
-                arround one line 
-                '''
-    #             spec_data_LiC[i,j] = np.random.uniform(total_data_divAp[rand,j,0], total_data_divAp[rand,j,0], size=None)
-    #             spec_data_BeC[i,j] = np.random.uniform(total_data_divAp[rand,j,1], total_data_divAp[rand,j,1], size=None)
-    #             spec_data_BC[i,j]  = np.random.uniform(total_data_divAp[rand,j,2], total_data_divAp[rand,j,2], size=None)
-    #             spec_data_C[i,j]  = np.random.uniform(total_data_divAp[rand,j,6], total_data_divAp[rand,j,6], size=None)
-    #             spec_data_OC[i,j]  = np.random.uniform(total_data_divAp[rand,j,7], total_data_divAp[rand,j,7], size=None)
+            data_delta = (np.max(total_data_divAp[:,:,:], axis=0) - np.min(total_data_divAp[:,:,:], axis=0))/delta
+            
+            '''
+            arround one line + Delta_data
+            '''      
+            spec_data_LiC[i,:] = np.random.uniform(total_data_divAp[rand,:,0]-data_delta[:,0], total_data_divAp[rand,:,0]+data_delta[:,0], size=None)
+            spec_data_BeC[i,:] = np.random.uniform(total_data_divAp[rand,:,1]-data_delta[:,1], total_data_divAp[rand,:,1]+data_delta[:,1], size=None)
+            spec_data_BC[i,:]  = np.random.uniform(total_data_divAp[rand,:,2]-data_delta[:,2], total_data_divAp[rand,:,2]+data_delta[:,2], size=None)
+            spec_data_C[i,:]  = np.random.uniform(total_data_divAp[rand,:,6]-data_delta[:,6], total_data_divAp[rand,:,6]+data_delta[:,6], size=None)
+            spec_data_OC[i,:]  = np.random.uniform(total_data_divAp[rand,:,7]-data_delta[:,7], total_data_divAp[rand,:,7]+data_delta[:,7], size=None)
+            
+            
+#             '''
+#             pack
+#             '''
+#             spec_data_LiC[i,:] = np.random.uniform(divAp_pack[1,:,0], divAp_pack[0,:,0], size=None)
+#             spec_data_BeC[i,:] = np.random.uniform(divAp_pack[1,:,1], divAp_pack[0,:,1], size=None)
+#             spec_data_BC[i,:]  = np.random.uniform(divAp_pack[1,:,2], divAp_pack[0,:,2], size=None)
+#             spec_data_C[i,:]  = np.random.uniform(divAp_pack[1,:,6], divAp_pack[0,:,6], size=None)
+#             spec_data_OC[i,:]  = np.random.uniform(divAp_pack[1,:,7], divAp_pack[0,:,7], size=None)
 
 
-    #             if spec_data_LiC[i,j] < divAp_pack[1,j,0] or spec_data_LiC[i,j] > divAp_pack[0,j,0]:
-    #                 j -= 1
-    #             elif spec_data_BeC[i,j] < divAp_pack[1,j,1] or spec_data_BeC[i,j] > divAp_pack[0,j,1]:
-    #                 j -= 1
-    #             elif spec_data_BC[i,j] < divAp_pack[1,j,2] or spec_data_BC[i,j] > divAp_pack[0,j,2]:
-    #                 j -= 1
-    #             elif spec_data_C[i,j] < divAp_pack[1,j,6] or spec_data_C[i,j] > divAp_pack[0,j,6]:
-    #                 j -= 1
-    #             elif spec_data_OC[i,j] < divAp_pack[1,j,7] or spec_data_OC[i,j] > divAp_pack[0,j,7]:
-    #                 j -= 1
 
-                j += 1
+#             '''
+#             arround one line 
+#             '''
+#             spec_data_LiC[i,:] = np.random.uniform(total_data_divAp[rand,:,0], total_data_divAp[rand,:,0], size=None)
+#             spec_data_BeC[i,:] = np.random.uniform(total_data_divAp[rand,:,1], total_data_divAp[rand,:,1], size=None)
+#             spec_data_BC[i,:]  = np.random.uniform(total_data_divAp[rand,:,2], total_data_divAp[rand,:,2], size=None)
+#             spec_data_C[i,:]  = np.random.uniform(total_data_divAp[rand,:,6], total_data_divAp[rand,:,6], size=None)
+#             spec_data_OC[i,:]  = np.random.uniform(total_data_divAp[rand,:,7], total_data_divAp[rand,:,7], size=None)
 
 
-    #     Li_norm = np.random.uniform(0.8,1.2,100)
-    #     Be_norm = np.random.uniform(0.8,1.2,100)
-    #     O_norm = np.random.uniform(0.8,1.2,100)
+# NEED TO REWRITE THIS PART
+#     #             if spec_data_LiC[i,j] < divAp_pack[1,j,0] or spec_data_LiC[i,j] > divAp_pack[0,j,0]:
+#     #                 j -= 1
+#     #             elif spec_data_BeC[i,j] < divAp_pack[1,j,1] or spec_data_BeC[i,j] > divAp_pack[0,j,1]:
+#     #                 j -= 1
+#     #             elif spec_data_BC[i,j] < divAp_pack[1,j,2] or spec_data_BC[i,j] > divAp_pack[0,j,2]:
+#     #                 j -= 1
+#     #             elif spec_data_C[i,j] < divAp_pack[1,j,6] or spec_data_C[i,j] > divAp_pack[0,j,6]:
+#     #                 j -= 1
+#     #             elif spec_data_OC[i,j] < divAp_pack[1,j,7] or spec_data_OC[i,j] > divAp_pack[0,j,7]:
+#     #                 j -= 1
 
-        ticks_Pseudodata_2 = time.time()
-        logging.info("\033[3;33mTime for Create Pseudodata : {:.4f} min\033[0;m".format((ticks_Pseudodata_2-ticks_Pseudodata_1)/60.))
+
+#     #     Li_norm = np.random.uniform(0.8,1.2,100)
+#     #     Be_norm = np.random.uniform(0.8,1.2,100)
+#     #     O_norm = np.random.uniform(0.8,1.2,100)
+
+        t2 = time.time()
+        logging.info("\033[3;33m Time Cost for this Step : {:.4f} min\033[0;m".format((t2-t1)/60.))
+        logging.info("=====Finish=====")
         
-        
-        ticks_N_1 = time.time()
+
+        '''
+        Recorver to (Spectrum)/(Normal Factor)
+        '''
+        logging.info("Recorver to (Spectrum)/(Normal Factor)")
+        logging.info("=====START=====")
+        t1 = time.time()
+
 
         Li_norm = np.random.uniform(min(parameter[:,11]),max(parameter[:,11]),100)
         Be_norm = np.random.uniform(min(parameter[:,12]),max(parameter[:,12]),100)
         O_norm = np.random.uniform(min(parameter[:,13]),max(parameter[:,13]),100)
 
-        '''
-        Recorver to (Spectrum)/(Normal Factor)
-        '''
         spectrum_E = np.zeros((number,84))
         for i in range(number):
             spectrum_E[i,:] = data[0,:,0]
@@ -897,37 +920,35 @@ class Create_Pseudodata:
         spectrum_C = spec_data_C[:,:]
         spectrum_O = spec_data_OC[:,:]*(spec_data_C[:,]/np.reshape(spec_data_C[:,52],(number,1)))
 
-
         '''
         Determine the Normal Factor for each Pseudodata
         '''
         norm_factor = np.zeros((number,14))
         for i in range(number):
-            chisq_scan_Li = np.zeros((100))
-            chisq_scan_Be = np.zeros((100))
-            chisq_scan_O = np.zeros((100))
-            for j in range(100):
-                pred_interpolate_Li = interpolate.interp1d((spectrum_E[0,:]), (spectrum_Li[i,:]*Li_norm[j]), kind='cubic')
-                pred_interpolate_Be = interpolate.interp1d((spectrum_E[0,:]), (spectrum_Be[i,:]*Be_norm[j]), kind='cubic')
-                pred_interpolate_O = interpolate.interp1d((spectrum_E[0,:]), (spectrum_O[i,:]*O_norm[j]), kind='cubic')
+            chisq_scan_Li = np.zeros((1000))
+            chisq_scan_Be = np.zeros((1000))
+            chisq_scan_O = np.zeros((1000))
 
-                chisq_scan_Li[j] = (interpolate_chisq(pred_interpolate_Li(Li_Eams),Li_Fams,Li_Sams)+
-                                    interpolate_chisq(pred_interpolate_Li(Li_Evy),Li_Fvy,Li_Svy)
-                                   )
+            pred_interpolate_Li = interpolate.interp1d((spectrum_E[0,:]), (spectrum_Li[i,:]*Li_norm.reshape(100,1)), kind='cubic')
+            pred_interpolate_Be = interpolate.interp1d((spectrum_E[0,:]), (spectrum_Be[i,:]*Be_norm.reshape(100,1)), kind='cubic')
+            pred_interpolate_O = interpolate.interp1d((spectrum_E[0,:]), (spectrum_O[i,:]*O_norm.reshape(100,1)), kind='cubic')
 
-                chisq_scan_Be[j] = (interpolate_chisq(pred_interpolate_Be(Be_Eams),Be_Fams,Be_Sams)+
-                                    interpolate_chisq(pred_interpolate_Be(Be_Evy),Be_Fvy,Be_Svy)
-                                   )
+            chisq_scan_Li = (interpolate_chisq(pred_interpolate_Li(Li_Eams),Li_Fams,Li_Sams)+
+                                interpolate_chisq(pred_interpolate_Li(Li_Evy),Li_Fvy,Li_Svy)
+                               )
 
-                chisq_scan_O[j] = (interpolate_chisq(pred_interpolate_O(O_Eams),O_Fams,O_Sams)+
-                                   interpolate_chisq(pred_interpolate_O(O_Evy),O_Fvy,O_Svy)+
-                                   interpolate_chisq(pred_interpolate_O(O_Eace),O_Face,O_Sace)
-                                  )
+            chisq_scan_Be = (interpolate_chisq(pred_interpolate_Be(Be_Eams),Be_Fams,Be_Sams)+
+                                interpolate_chisq(pred_interpolate_Be(Be_Evy),Be_Fvy,Be_Svy)
+                               )
+
+            chisq_scan_O = (interpolate_chisq(pred_interpolate_O(O_Eams),O_Fams,O_Sams)+
+                               interpolate_chisq(pred_interpolate_O(O_Evy),O_Fvy,O_Svy)+
+                               interpolate_chisq(pred_interpolate_O(O_Eace),O_Face,O_Sace)
+                              )
 
             norm_factor[i,11] = Li_norm[np.where(chisq_scan_Li == min(chisq_scan_Li))]
             norm_factor[i,12] = Be_norm[np.where(chisq_scan_Be == min(chisq_scan_Be))]
             norm_factor[i,13] = O_norm[np.where(chisq_scan_O == min(chisq_scan_O))]
-
 
         logging.info("Pseudo Normal Factor")
         logging.info(" {:^4} {:^6} {:^6} {:^6}".format("","Li","Be","O"))
@@ -935,17 +956,21 @@ class Create_Pseudodata:
         logging.info(" {:^4} {:^4.4f} {:^4.4f} {:^4.4f}".format("Max",max(norm_factor[:,11]),max(norm_factor[:,12]),max(norm_factor[:,13])))
         logging.info(" {:^4} {:^4.4f} {:^4.4f} {:^4.4f}".format("Min",min(norm_factor[:,11]),min(norm_factor[:,12]),min(norm_factor[:,13])))
         logging.info(" {:^4} {:^4.4f} {:^4.4f} {:^4.4f}".format("Ave.",np.average(norm_factor[:,11]),np.average(norm_factor[:,12]),np.average(norm_factor[:,13])))
-        
-        
-        ticks_N_2 = time.time()
-        logging.info("\033[3;33mTime for N_Li : {:.4f} min\033[0;m".format((ticks_N_2-ticks_N_1)/60.))
-        
 
-        ticks_Recorver_Spectrum_1 = time.time()
+
+        t2 = time.time()
+        logging.info("\033[3;33m Time Cost for this Step : {:.4f} min\033[0;m".format((t2-t1)/60.))
+        logging.info("=====Finish=====")
+
         
         '''
         Recorver to Spectrum
         '''
+        logging.info("Recorver to Spectrum")
+        logging.info("=====START=====")
+        t1 = time.time()
+        
+        
         spectrum_E = np.zeros((number,84))
         for i in range(number):
             spectrum_E[i,:] = data[0,:,0] 
@@ -961,36 +986,33 @@ class Create_Pseudodata:
         pseudodata_tmp = []
         norm_chisq = np.zeros((number))
         normalfactor = []
+        norm_interpolate_Li = interpolate.interp1d((spectrum_E[0,:]), (spectrum_Li[:,:]), kind='cubic')
+        norm_interpolate_Be = interpolate.interp1d((spectrum_E[0,:]), (spectrum_Be[:,:]), kind='cubic')
+        pred_interpolate_B  = interpolate.interp1d((spectrum_E[0,:]), (spectrum_B[:,:]), kind='cubic')
+        pred_interpolate_C  = interpolate.interp1d((spectrum_E[0,:]), (spectrum_C[:,:]), kind='cubic')
+        norm_interpolate_O  = interpolate.interp1d((spectrum_E[0,:]), (spectrum_O[:,:]), kind='cubic')
+        norm_chisq = (
+                            interpolate_chisq(P=norm_interpolate_Li(Li_Eams), F=Li_Fams, S=Li_Sams)+
+                            interpolate_chisq(P=norm_interpolate_Li(Li_Evy), F=Li_Fvy, S=Li_Svy)+
+
+                            interpolate_chisq(P=norm_interpolate_Be(Be_Eams), F=Be_Fams, S=Be_Sams)+
+                            interpolate_chisq(P=norm_interpolate_Be(Be_Evy), F=Be_Fvy, S=Be_Svy)+
+
+                            interpolate_chisq(P=pred_interpolate_B(B_Eams), F=B_Fams, S=B_Sams)+
+                            interpolate_chisq(P=pred_interpolate_B(B_Evy), F=B_Fvy, S=B_Svy)+
+                            interpolate_chisq(P=pred_interpolate_B(B_Eace), F=B_Face, S=B_Sace)+
+
+                            interpolate_chisq(P=pred_interpolate_C(C_Eams), F=C_Fams, S=C_Sams)+
+                            interpolate_chisq(P=pred_interpolate_C(C_Evy), F=C_Fvy, S=C_Svy)+
+                            interpolate_chisq(P=pred_interpolate_C(C_Eace), F=C_Face, S=C_Sace)+
+
+                            interpolate_chisq(P=norm_interpolate_O(O_Eams), F=O_Fams, S=O_Sams)+
+                            interpolate_chisq(P=norm_interpolate_O(O_Evy), F=O_Fvy, S=O_Svy)+
+                            interpolate_chisq(P=norm_interpolate_O(O_Eace), F=O_Face, S=O_Sace)
+                         )
+            
+        normalfactor = []
         for i in range(number):
-            norm_interpolate_Li = interpolate.interp1d((spectrum_E[0,:]), (spectrum_Li[i,:]), kind='cubic')
-            norm_interpolate_Be = interpolate.interp1d((spectrum_E[0,:]), (spectrum_Be[i,:]), kind='cubic')
-            pred_interpolate_B  = interpolate.interp1d((spectrum_E[0,:]), (spectrum_B[i,:]), kind='cubic')
-            pred_interpolate_C  = interpolate.interp1d((spectrum_E[0,:]), (spectrum_C[i,:]), kind='cubic')
-            norm_interpolate_O  = interpolate.interp1d((spectrum_E[0,:]), (spectrum_O[i,:]), kind='cubic')
-            norm_chisq[i] = (
-                                interpolate_chisq(P=norm_interpolate_Li(Li_Eams), F=Li_Fams, S=Li_Sams)+
-                                interpolate_chisq(P=norm_interpolate_Li(Li_Evy), F=Li_Fvy, S=Li_Svy)+
-
-                                interpolate_chisq(P=norm_interpolate_Be(Be_Eams), F=Be_Fams, S=Be_Sams)+
-                                interpolate_chisq(P=norm_interpolate_Be(Be_Evy), F=Be_Fvy, S=Be_Svy)+
-
-                                interpolate_chisq(P=pred_interpolate_B(B_Eams), F=B_Fams, S=B_Sams)+
-                                interpolate_chisq(P=pred_interpolate_B(B_Evy), F=B_Fvy, S=B_Svy)+
-                                interpolate_chisq(P=pred_interpolate_B(B_Eace), F=B_Face, S=B_Sace)+
-
-                                interpolate_chisq(P=pred_interpolate_C(C_Eams), F=C_Fams, S=C_Sams)+
-                                interpolate_chisq(P=pred_interpolate_C(C_Evy), F=C_Fvy, S=C_Svy)+
-                                interpolate_chisq(P=pred_interpolate_C(C_Eace), F=C_Face, S=C_Sace)+
-
-                                interpolate_chisq(P=norm_interpolate_O(O_Eams), F=O_Fams, S=O_Sams)+
-                                interpolate_chisq(P=norm_interpolate_O(O_Evy), F=O_Fvy, S=O_Svy)+
-                                interpolate_chisq(P=norm_interpolate_O(O_Eace), F=O_Face, S=O_Sace)
-                             )
-            
-            ticks_Recorver_Spectrum_2 = time.time()
-            logging.info("\033[3;33mTime for Recorver_Spectrum : {:.4f} min\033[0;m".format((ticks_Recorver_Spectrum_2-ticks_Recorver_Spectrum_1)/60.))
-        
-            
             
             if index == 0:
     #             if norm_chisq[i] < min(chi)+15.94: # 1sigma
@@ -1025,11 +1047,14 @@ class Create_Pseudodata:
         for i in range(6):
             pseudodata[:,:,i] = np.array(pseudodata_tmp)[:,i,:]
 
-
+        t2 = time.time()
+        logging.info("\033[3;33m Time Cost for this Step : {:.4f} min\033[0;m".format((t2-t1)/60.))
+        logging.info("=====Finish=====")
+        logging.info("\n")
         #######################################################################################################    
         ticks_2 = time.time()
         totaltime =  ticks_2 - ticks_1
-        logging.info("\033[3;33mTime consumption : {:.4f} min\033[0;m".format(totaltime/60.))
+        logging.info("\033[3;33m Total Time consumption : {:.4f} min\033[0;m".format(totaltime/60.))
         return normalfactor, pseudodata
         
 #     self.normalfactor = normalfactor
