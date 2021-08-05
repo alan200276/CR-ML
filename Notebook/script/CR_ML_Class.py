@@ -53,9 +53,9 @@ class Mock_Data_to_NumpyArray:
         
         
 """
-Mock_Data_PreProcessing
+Mock_Data_Rescale
 """        
-class Mock_Data_PreProcessing:
+class Mock_Data_Rescale:
     def __init__(self, origin_parameter, new_parameter, spectrum, usedata = False):
         self.len = len(origin_parameter)
 
@@ -98,9 +98,9 @@ class Mock_Data_PreProcessing:
 #=========================================================================================================#        
    
 """
-Mock_Data_Processing_for_Training
+Mock_Data_Processing
 """
-class Mock_Data_Processing_for_Training:
+class Mock_Data_Processing:
     def __init__(self, parameter, E=0, Li=0, Be=0, B=0, C=0, O=0, data=0, usedata = False):
         self.len = len(parameter)
         self.E, self.Li, self.Be, self.B, self.C, self.O = E, Li, Be, B, C, O
@@ -116,30 +116,50 @@ class Mock_Data_Processing_for_Training:
             self.E, self.Li, self.Be, self.B, self.C, self.O = data[:,:,0], data[:,:,1],data[:,:,2],data[:,:,3],data[:,:,4],data[:,:,5]
         
             
-    def spectrum_ratio(self):
+    def spectrum_ratio(self, mock = True):
         import time
         logging.info(time.strftime("%a %b %d %H:%M:%S %Y", time.localtime()))
         ticks_1 = time.time()
         #######################################################################################################
-        """
+        '''
         Whitening
-        """
+        '''
+        logging.info("Whitening")
+        logging.info("=====START=====")
+        t1 = time.time()
+        
         total_data_in_ratio = np.zeros((self.len, 84, 8))
-        for i in range(self.len):
-            total_data_in_ratio[i,:,0] = (self.Li[i,:]/self.NLi[i])/(self.C[i,:]/self.C[i,52]) # Li/C
-            total_data_in_ratio[i,:,1] = (self.Be[i,:]/self.NBe[i])/(self.C[i,:]/self.C[i,52]) # Be/C
-            total_data_in_ratio[i,:,2] =  self.B[i,:]/(self.C[i,:]/self.C[i,52]) # B/C
+        C_109_5 = self.C[:,52].reshape(self.len,1)
+        N_Li = self.NLi.reshape(self.len,1)
+        N_Be = self.NBe.reshape(self.len,1)
+        N_O = self.NO.reshape(self.len,1)
+        
+        total_data_in_ratio[:,:,0] = (self.Li/N_Li)/(self.C/C_109_5) # (Li/N_Li)/(C/C_109.5)
+        total_data_in_ratio[:,:,1] = (self.Be/N_Be)/(self.C/C_109_5) # (Be/N_Be)/(C/C_109.5)
+        total_data_in_ratio[:,:,2] = self.B/(self.C/C_109_5) # B/(C/C_109.5)
 
-            total_data_in_ratio[i,:,3] = (self.Li[i,:]/self.NLi[i])/(self.O[i,:]/self.NO[i]) # Li/O
-            total_data_in_ratio[i,:,4] = (self.Be[i,:]/self.NBe[i])/(self.O[i,:]/self.NO[i]) # Be/O
-            total_data_in_ratio[i,:,5] = self.B[i,:]/(self.O[i,:]/self.NO[i]) # B/O
+        total_data_in_ratio[:,:,3] = (self.Li/N_Li)/(self.O/N_O) # (Li/N_Li)/(O/N_O)
+        total_data_in_ratio[:,:,4] = (self.Be/N_Be)/(self.O/N_O) # (Be/N_Be)/(O/N_O)
+        total_data_in_ratio[:,:,5] = self.B/(self.O/N_O) # B/(O/N_O)
 
-            total_data_in_ratio[i,:,6] = self.C[i,:]/self.C[i,52] # C/C_109.5
-            total_data_in_ratio[i,:,7] = (self.O[i,:]/self.NO[i])/self.C[i,52] # O/C_109.5
-#             """for pseudo data"""
-#             total_data_in_ratio[i,:,6] = self.C[i,:] # C/
-#             total_data_in_ratio[i,:,7] = (self.O[i,:]/self.NO[i])/(self.C[i,:]/self.C[i,52]) # O/C
-            
+        if mock:
+            total_data_in_ratio[:,:,6] = self.C/C_109_5 # C/C_109.5
+            total_data_in_ratio[:,:,7] = (self.O/N_O)/C_109_5  # (O/N_O)/C_109.5
+        """
+        Needo to Check
+        """
+        if not mock:
+            """for pseudo data"""
+            total_data_in_ratio[i,:,6] = self.C[i,:] # C
+            total_data_in_ratio[i,:,7] = (self.O[:,:]/N_O)/(self.C[:,:]/C_109_5) # (O/N_O)/(C/C_109.5)
+
+
+        
+        t2 = time.time()
+        logging.info("\033[3;33m Time Cost for this Step : {:.4f} min\033[0;m".format((t2-t1)/60.))
+        logging.info("=====Finish=====")
+
+
         self.LiC, self.BeC, self.BC = total_data_in_ratio[:,:,0], total_data_in_ratio[:,:,1], total_data_in_ratio[:,:,2]
         self.LiO, self.BeO, self.BO = total_data_in_ratio[:,:,3], total_data_in_ratio[:,:,4], total_data_in_ratio[:,:,5]
         self.CC_110, self.OC = total_data_in_ratio[:,:,6], total_data_in_ratio[:,:,7]
@@ -149,6 +169,9 @@ class Mock_Data_Processing_for_Training:
         ticks_2 = time.time()
         totaltime =  ticks_2 - ticks_1
         logging.info("\033[3;33mTime Cost : {:.4f} min\033[0;m".format(totaltime/60.))
+        
+        
+        
         
     def Train_Test_split(self, splitrate = 0.1, split = True):
         from sklearn.model_selection import train_test_split
@@ -165,10 +188,17 @@ class Mock_Data_Processing_for_Training:
         """     
         random split traning sample and test sample, 10% for test
         """
+        logging.info("random split traning sample and test sample, 10% for test")
+        logging.info("=====START=====")
+        t1 = time.time()
         if split == True:
             ran = random.randint(0,100000)
-            train_raw, predict_raw, train_raw_para, predict_raw_para = train_test_split(self.total_data_in_ratio, self.parameter, test_size=splitrate,
-                                                random_state = np.random.seed(ran), shuffle = True )
+            splitting = train_test_split(self.total_data_in_ratio, self.parameter, test_size=splitrate, random_state = np.random.seed(ran), shuffle = True )
+            train_raw, predict_raw = splitting[0], splitting[1]  
+            train_raw_para, predict_raw_para = splitting[2], splitting[3]
+            
+            
+            
         elif split == False:
             train_raw = self.total_data_in_ratio
             train_raw_para = self.parameter
@@ -177,6 +207,9 @@ class Mock_Data_Processing_for_Training:
         
         train_height, predict_height = train_raw.shape[0], predict_raw.shape[0]
         
+        t2 = time.time()
+        logging.info("\033[3;33m Time Cost for this Step : {:.4f} min\033[0;m".format((t2-t1)/60.))
+        logging.info("=====Finish=====")
 
         """
         Normolize every spectrum and take log_{10}
@@ -327,7 +360,8 @@ class Calculate_Chi_Square:
         import time
         
         def interpolate_chisq(P,F,S):
-            return round(np.sum(((P-np.array(F))**2)/(np.array(S)**2)), 5)
+            return np.round(np.sum(((P-np.array(F))**2)/(np.array(S)**2), axis=1), 5)
+        
         
         logging.info(time.strftime("%a %b %d %H:%M:%S %Y", time.localtime()))
         ticks_1 = time.time()
@@ -362,39 +396,53 @@ class Calculate_Chi_Square:
         O_Evy, O_Fvy, O_Svy = OV[0], OV[1], OV[2]
         O_Eace,O_Face,O_Sace = OA[0], OA[1], OA[2]
         ####################################################################################
-        # Fit the Spectrum and Calculate Chi-Square
+        # Fit the Spectrum
+        logging.info("Fit the Spectrum.")
+        logging.info("=====START=====")
+        t1 = time.time()
+        
+        Li_interpolate = interpolate.interp1d((self.E[0]), self.Li, kind='cubic')
+        Be_interpolate = interpolate.interp1d((self.E[0]), self.Be, kind='cubic')
+        B_interpolate = interpolate.interp1d((self.E[0]), self.B, kind='cubic')
+        C_interpolate = interpolate.interp1d((self.E[0]), self.C, kind='cubic')
+        O_interpolate = interpolate.interp1d((self.E[0]), self.O, kind='cubic')
+        t2 = time.time()
+        logging.info("\033[3;33m Time Cost for this Step : {:.4f} min\033[0;m".format((t2-t1)/60.))
+        logging.info("=====Finish=====")
+        
+        
+        # Calculate Chi-Square
+        logging.info("Calculate Chi-Square.")
+        logging.info("=====START=====")
+        t1 = time.time()
         total_chisq = np.zeros((self.len))
-        for i in range(self.len):
-            Li_interpolate = interpolate.interp1d((self.E[0]), self.Li[i], kind='cubic')
-            Be_interpolate = interpolate.interp1d((self.E[0]), self.Be[i], kind='cubic')
-            B_interpolate = interpolate.interp1d((self.E[0]), self.B[i], kind='cubic')
-            C_interpolate = interpolate.interp1d((self.E[0]), self.C[i], kind='cubic')
-            O_interpolate = interpolate.interp1d((self.E[0]), self.O[i], kind='cubic')
+        total_chisq = (
+            interpolate_chisq(P=Li_interpolate(Li_Eams), F=Li_Fams, S=Li_Sams)+
+            interpolate_chisq(P=Li_interpolate(Li_Evy), F=Li_Fvy, S=Li_Svy)+
 
-            total_chisq[i] = (
-                interpolate_chisq(P=Li_interpolate(Li_Eams), F=Li_Fams, S=Li_Sams)+
-                interpolate_chisq(P=Li_interpolate(Li_Evy), F=Li_Fvy, S=Li_Svy)+
+            interpolate_chisq(P=Be_interpolate(Be_Eams), F=Be_Fams, S=Be_Sams)+
+            interpolate_chisq(P=Be_interpolate(Be_Evy), F=Be_Fvy, S=Be_Svy)+
 
-                interpolate_chisq(P=Be_interpolate(Be_Eams), F=Be_Fams, S=Be_Sams)+
-                interpolate_chisq(P=Be_interpolate(Be_Evy), F=Be_Fvy, S=Be_Svy)+
+            interpolate_chisq(P=B_interpolate(B_Eams), F=B_Fams, S=B_Sams)+
+            interpolate_chisq(P=B_interpolate(B_Evy), F=B_Fvy, S=B_Svy)+
+            interpolate_chisq(P=B_interpolate(B_Eace), F=B_Face, S=B_Sace)+
 
-                interpolate_chisq(P=B_interpolate(B_Eams), F=B_Fams, S=B_Sams)+
-                interpolate_chisq(P=B_interpolate(B_Evy), F=B_Fvy, S=B_Svy)+
-                interpolate_chisq(P=B_interpolate(B_Eace), F=B_Face, S=B_Sace)+
+            interpolate_chisq(P=C_interpolate(C_Eams), F=C_Fams, S=C_Sams)+
+            interpolate_chisq(P=C_interpolate(C_Evy), F=C_Fvy, S=C_Svy)+
+            interpolate_chisq(P=C_interpolate(C_Eace), F=C_Face, S=C_Sace)+
 
-                interpolate_chisq(P=C_interpolate(C_Eams), F=C_Fams, S=C_Sams)+
-                interpolate_chisq(P=C_interpolate(C_Evy), F=C_Fvy, S=C_Svy)+
-                interpolate_chisq(P=C_interpolate(C_Eace), F=C_Face, S=C_Sace)+
-
-                interpolate_chisq(P=O_interpolate(O_Eams), F=O_Fams, S=O_Sams)+
-                interpolate_chisq(P=O_interpolate(O_Evy), F=O_Fvy, S=O_Svy)+
-                interpolate_chisq(P=O_interpolate(O_Eace), F=O_Face, S=O_Sace)
-            )
-
+            interpolate_chisq(P=O_interpolate(O_Eams), F=O_Fams, S=O_Sams)+
+            interpolate_chisq(P=O_interpolate(O_Evy), F=O_Fvy, S=O_Svy)+
+            interpolate_chisq(P=O_interpolate(O_Eace), F=O_Face, S=O_Sace)
+        )
+        t2 = time.time()
+        logging.info("\033[3;33m Time Cost for this Step : {:.4f} min\033[0;m".format((t2-t1)/60.))
+        logging.info("=====Finish=====")
+        logging.info("\n")
         #######################################################################################################    
         ticks_2 = time.time()
         totaltime =  ticks_2 - ticks_1
-        logging.info("\033[3;33mTime consumption : {:.4f} min\033[0;m".format(totaltime/60.))
+        logging.info("\033[3;33m Total Time Consumption : {:.4f} min\033[0;m".format(totaltime/60.))
         return total_chisq
 #=========================================================================================================#        
        
