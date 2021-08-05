@@ -52,6 +52,7 @@ class Create_Pseudodata:
         """
         logging.info("Experimental data are loading.")
         logging.info("=====START=====")
+        t1 = time.time()
         ####################################################################################
         exp_data_path = "../Data/Exp_Data/"
 
@@ -77,6 +78,8 @@ class Create_Pseudodata:
         O_Eams, O_Fams, O_Sams = OAMS[0], OAMS[1], OAMS[2]
         O_Evy, O_Fvy, O_Svy = OV[0], OV[1], OV[2]
         O_Eace,O_Face,O_Sace = OA[0], OA[1], OA[2]
+        t2 = time.time()
+        logging.info("\033[3;33m Time Cost for this Step : {:.4f} min\033[0;m".format((t2-t1)/60.))
         logging.info("=====Finish=====")
         ####################################################################################
 
@@ -84,37 +87,73 @@ class Create_Pseudodata:
         Using whitening data to make pseudodata
         '''
         ####################################################################################
+        logging.info("Using whitening data to make pseudodata")
+        logging.info("=====START=====")
+        t1 = time.time()
+        
         total_data_divAp = np.zeros((data.shape[0], 84, 8))
-        for i in range(data.shape[0]):
-            total_data_divAp[i,:,0] = (data[i,:,1]/parameter[i,11])/(data[i,:,4]/data[i,52,4]) # (Li/N_Li)/(C/C_109.5)
-            total_data_divAp[i,:,1] = (data[i,:,2]/parameter[i,12])/(data[i,:,4]/data[i,52,4]) # (Be/N_Be)/(C/C_109.5)
-            total_data_divAp[i,:,2] = data[i,:,3]/(data[i,:,4]/data[i,52,4]) # B/(C/C_109.5)
+        
+        C_109_5 = data[:,52,4].reshape(data.shape[0],1)
+        N_Li = parameter[:,11].reshape(data.shape[0],1)
+        N_Be = parameter[:,12].reshape(data.shape[0],1)
+        N_O = parameter[:,13].reshape(data.shape[0],1)
+        
+        total_data_divAp[:,:,0] = (data[:,:,1]/N_Li)/(data[:,:,4]/C_109_5) # (Li/N_Li)/(C/C_109.5)
+        total_data_divAp[:,:,1] = (data[:,:,2]/N_Be)/(data[:,:,4]/C_109_5) # (Be/N_Be)/(C/C_109.5)
+        total_data_divAp[:,:,2] = data[:,:,3]/(data[:,:,4]/C_109_5) # B/(C/C_109.5)
 
-            total_data_divAp[i,:,3] = (data[i,:,1]/parameter[i,11])/(data[i,:,5]/parameter[i,13]) # (Li/N_Li)/(O/N_O)
-            total_data_divAp[i,:,4] = (data[i,:,2]/parameter[i,12])/(data[i,:,5]/parameter[i,13]) # (Be/N_Be)/(O/N_O)
-            total_data_divAp[i,:,5] = data[i,:,3]/(data[i,:,5]/parameter[i,13]) # B/(O/N_O)
+        total_data_divAp[:,:,3] = (data[:,:,1]/N_Li)/(data[:,:,5]/N_O) # (Li/N_Li)/(O/N_O)
+        total_data_divAp[:,:,4] = (data[:,:,2]/N_Be)/(data[:,:,5]/N_O) # (Be/N_Be)/(O/N_O)
+        total_data_divAp[:,:,5] = data[:,:,3]/(data[:,:,5]/N_O) # B/(O/N_O)
 
-            total_data_divAp[i,:,6] = data[i,:,4] # C
-            total_data_divAp[i,:,7] = (data[i,:,5]/parameter[i,13])/(data[i,:,4]/data[i,52,4])  # (O/N_O)/(C/C_109.5)
+        total_data_divAp[:,:,6] = data[:,:,4] # C
+        total_data_divAp[:,:,7] = (data[:,:,5]/N_O)/(data[:,:,4]/C_109_5)  # (O/N_O)/(C/C_109.5)
+        
+        t2 = time.time()
+        logging.info("\033[3;33m Time Cost for this Step : {:.4f} min\033[0;m".format((t2-t1)/60.))
+        logging.info("=====Finish=====")
+# OLD
+#         for i in range(data.shape[0]):
+#             total_data_divAp[i,:,0] = (data[i,:,1]/parameter[i,11])/(data[i,:,4]/data[i,52,4]) # (Li/N_Li)/(C/C_109.5)
+#             total_data_divAp[i,:,1] = (data[i,:,2]/parameter[i,12])/(data[i,:,4]/data[i,52,4]) # (Be/N_Be)/(C/C_109.5)
+#             total_data_divAp[i,:,2] = data[i,:,3]/(data[i,:,4]/data[i,52,4]) # B/(C/C_109.5)
+
+#             total_data_divAp[i,:,3] = (data[i,:,1]/parameter[i,11])/(data[i,:,5]/parameter[i,13]) # (Li/N_Li)/(O/N_O)
+#             total_data_divAp[i,:,4] = (data[i,:,2]/parameter[i,12])/(data[i,:,5]/parameter[i,13]) # (Be/N_Be)/(O/N_O)
+#             total_data_divAp[i,:,5] = data[i,:,3]/(data[i,:,5]/parameter[i,13]) # B/(O/N_O)
+
+#             total_data_divAp[i,:,6] = data[i,:,4] # C
+#             total_data_divAp[i,:,7] = (data[i,:,5]/parameter[i,13])/(data[i,:,4]/data[i,52,4])  # (O/N_O)/(C/C_109.5)
         ####################################################################################
-        ticks_Search_The_Pack_1 = time.time()
         '''
         Search The Pack of Spectrum
         '''
+        logging.info("Search The Pack of Spectrum")
+        logging.info("=====START=====")
+        t1 = time.time()
         divAp_pack = np.zeros((2, 84, 8))
-        for i in range(8):
-            for j in range(84):
-                divAp_pack[0,j,i] = max(total_data_divAp[:,j,i])
-                divAp_pack[1,j,i] = min(total_data_divAp[:,j,i])
+        divAp_pack[0,:,:] = np.max(total_data_divAp[:,:,:], axis=0)
+        divAp_pack[1,:,:] = np.min(total_data_divAp[:,:,:], axis=0) 
         
-        ticks_Search_The_Pack_2 = time.time()
-        logging.info("\033[3;33mTime for Search The Pack of Spectrum : {:.4f} min\033[0;m".format((ticks_Search_The_Pack_2-ticks_Search_The_Pack_1)/60.))
+# OLD
+#         divAp_pack = np.zeros((2, 84, 8))
+#         for i in range(8):
+#             for j in range(84):
+#                 divAp_pack[0,j,i] = max(total_data_divAp[:,j,i])
+#                 divAp_pack[1,j,i] = min(total_data_divAp[:,j,i])
+                
+        t2 = time.time()
+        logging.info("\033[3;33m Time Cost for this Step : {:.4f} min\033[0;m".format((t2-t1)/60.))
+        logging.info("=====Finish=====")
+
         
         
         '''
         Create Pseudodata
         '''
-        ticks_Pseudodata_1 = time.time()
+        logging.info("Create Pseudodata")
+        logging.info("=====START=====")
+        t1 = time.time()
         
         spec_data_LiC = np.zeros((number,84))
         spec_data_BeC = np.zeros((number,84))
@@ -190,11 +229,10 @@ class Create_Pseudodata:
     #     Be_norm = np.random.uniform(0.8,1.2,100)
     #     O_norm = np.random.uniform(0.8,1.2,100)
 
-        ticks_Pseudodata_2 = time.time()
-        logging.info("\033[3;33mTime for Create Pseudodata : {:.4f} min\033[0;m".format((ticks_Pseudodata_2-ticks_Pseudodata_1)/60.))
+        t2 = time.time()
+        logging.info("\033[3;33m Time Cost for this Step : {:.4f} min\033[0;m".format((t2-t1)/60.))
+        logging.info("=====Finish=====")
         
-        
-        ticks_N_1 = time.time()
 
         Li_norm = np.random.uniform(min(parameter[:,11]),max(parameter[:,11]),100)
         Be_norm = np.random.uniform(min(parameter[:,12]),max(parameter[:,12]),100)
@@ -203,6 +241,10 @@ class Create_Pseudodata:
         '''
         Recorver to (Spectrum)/(Normal Factor)
         '''
+        logging.info("Recorver to (Spectrum)/(Normal Factor)")
+        logging.info("=====START=====")
+        t1 = time.time()
+        
         spectrum_E = np.zeros((number,84))
         for i in range(number):
             spectrum_E[i,:] = data[0,:,0]
@@ -252,15 +294,19 @@ class Create_Pseudodata:
         logging.info(" {:^4} {:^4.4f} {:^4.4f} {:^4.4f}".format("Ave.",np.average(norm_factor[:,11]),np.average(norm_factor[:,12]),np.average(norm_factor[:,13])))
         
         
-        ticks_N_2 = time.time()
-        logging.info("\033[3;33mTime for N_Li : {:.4f} min\033[0;m".format((ticks_N_2-ticks_N_1)/60.))
-        
+        t2 = time.time()
+        logging.info("\033[3;33m Time Cost for this Step : {:.4f} min\033[0;m".format((t2-t1)/60.))
+        logging.info("=====Finish=====")
 
-        ticks_Recorver_Spectrum_1 = time.time()
         
         '''
         Recorver to Spectrum
         '''
+        logging.info("Recorver to Spectrum")
+        logging.info("=====START=====")
+        t1 = time.time()
+        
+        
         spectrum_E = np.zeros((number,84))
         for i in range(number):
             spectrum_E[i,:] = data[0,:,0] 
@@ -302,9 +348,10 @@ class Create_Pseudodata:
                                 interpolate_chisq(P=norm_interpolate_O(O_Eace), F=O_Face, S=O_Sace)
                              )
             
-            ticks_Recorver_Spectrum_2 = time.time()
-            logging.info("\033[3;33mTime for Recorver_Spectrum : {:.4f} min\033[0;m".format((ticks_Recorver_Spectrum_2-ticks_Recorver_Spectrum_1)/60.))
-        
+            t2 = time.time()
+            logging.info("\033[3;33m Time Cost for this Step : {:.4f} min\033[0;m".format((t2-t1)/60.))
+            logging.info("=====Finish=====")
+
             
             
             if index == 0:
@@ -344,7 +391,7 @@ class Create_Pseudodata:
         #######################################################################################################    
         ticks_2 = time.time()
         totaltime =  ticks_2 - ticks_1
-        logging.info("\033[3;33mTime consumption : {:.4f} min\033[0;m".format(totaltime/60.))
+        logging.info("\033[3;33m Total Time consumption : {:.4f} min\033[0;m".format(totaltime/60.))
         return normalfactor, pseudodata
         
 #     self.normalfactor = normalfactor
