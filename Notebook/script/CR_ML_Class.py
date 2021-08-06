@@ -362,7 +362,7 @@ class Select_Sample:
         elif self.sigma == 6:
             deltachi = 70
         else:
-            logging.info(" ONLY 1 \sigma, 2 \sigma, 3 \sigma, 6 \sigma are available.")
+            logging.info(" ONLY 1 σ, 2 σ, 3 σ, 6 σ are available.")
             sys.exit(1)
         total_chisq_list = self.total_chisq_list
         
@@ -387,7 +387,7 @@ class Select_Sample:
                 for j in range(6):
                     data_sigma[count,:,j] = self.data[i,:,j]
                 count +=1
-        logging.info("There are {} data in the {} \sigma region.".format(count,self.sigma))
+        logging.info("There are {} data in the {} σ region.".format(count,self.sigma))
         #######################################################################################################
         ticks_2 = time.time()
         totaltime =  ticks_2 - ticks_1

@@ -24,7 +24,7 @@ class load_mock_data:
         para_0 = np.load(mock_data_path + origin_para[0])
         para_1 = np.load(mock_data_path + new_para[0])
         origin_data = np.load(mock_data_path + mock_data[0])
-        mock_new = CR.Mock_Data_PreProcessing(para_0, para_1, origin_data)
+        mock_new = CR.Mock_Data_Rescale(para_0, para_1, origin_data)
         logging.info("{}/{}".format("1",len(origin_para)))
         logging.info("There are {} data ".format(len(mock_new.new_parameter)))
         chisq = np.load(mock_data_path + chi_square[0])
