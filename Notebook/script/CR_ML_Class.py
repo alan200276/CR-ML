@@ -523,7 +523,7 @@ class Calculate_Chi_Square:
 ReCalculateAp
 """
 class ReCalculateAp:
-    def __init__(self, data=[]:
+    def __init__(self, data=[]):
         """
         Usage: 
             ReCalculateAp(data)
