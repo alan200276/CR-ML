@@ -1,46 +1,50 @@
+#!/usr/bin/python3
 #encoding: utf-8
 #有上面這行才能用中文註解
 """
 -----------------------------------------------------------
 ""python3""
 \033[3;32m ML_Training.py \033[0;m
-\033[3;31m Usage: ML_Training(input_train,input_test,source_train,source_test) \033[0;m
+\033[3;31m Usage: ML_Training(input_train,input_test,source_train,source_test,EPOCH=100,save_path="save_path") \033[0;m
 \033[3;31m        Trained Model will be stroed in "Model" directory \033[0;m
-\033[3;31m Usage: Load_ML_ML_Training(input_train,input_test,source_train,source_test,model_path,EPOCH=250,BATCH=256)\033[0;m
+\033[3;31m Usage: Load_ML_ML_Training(input_train,input_test,source_train,source_test,model_path,EPOCH=250,BATCH=256,save_path="save_path")\033[0;m
 \033[3;31m        Load Model for snd training \033[0;m
 \033[3;31m        Trained Model will be stroed in "Model" directory \033[0;m
 
 
 -----------------------------------------------------------
 """
-print(__doc__)
+
 # from __future__ import absolute_import, division, print_function, unicode_literals
 import numpy as np
 import matplotlib.pyplot as plt
 import time
-# Import TensorFlow
 import tensorflow as tf
 from tensorflow.keras.models import Sequential, load_model
 from tensorflow.keras.layers import Dense, Conv1D, MaxPooling1D, Flatten, Dropout #, BatchNormalization, Activation
 from tensorflow.keras import metrics, optimizers
 from tensorflow.keras.callbacks import ModelCheckpoint, LearningRateScheduler, EarlyStopping, CSVLogger
 from tensorflow.keras.optimizers import Adam , SGD , Adagrad
-import myfunction as my_fn
 import os
 import sys
+import importlib
+import logging
+importlib.reload(logging)
+logging.basicConfig(level = logging.INFO)
+logging.info(__doc__)
 
 
 
 
-def ML_Training(input_train,input_test,source_train,source_test,EPOCH=100):
-    print(time.strftime("%a %b %d %H:%M:%S %Y", time.localtime()))
+def ML_Training(input_train=[],input_test=[],source_train=[],source_test=[],EPOCH=100, save_path="save_path"):
+    logging.info(time.strftime("%a %b %d %H:%M:%S %Y", time.localtime()))
     ticks_1 = time.time()
     ######################################################################################################
     """
     Create a directory to store model.
     """
-    if os.path.exists("./Model_denoise") == 0:
-        os.mkdir("./Model_denoise")
+    if os.path.exists(save_path + "/Model") == 0:
+        os.mkdir(save_path + "/Model")
     
     
     model_generator = Sequential(name = 'Sequential')
@@ -64,13 +68,13 @@ def ML_Training(input_train,input_test,source_train,source_test,EPOCH=100):
     model_generator.summary()
 
     check_list=[]
-    tensorboard_callback = tf.keras.callbacks.TensorBoard(log_dir="./Model_denoise/log_test")
+    tensorboard_callback = tf.keras.callbacks.TensorBoard(log_dir=save_path + "/Model/log_test")
 #     lrate = LearningRateScheduler(my_fn.step_decay,verbose=1)
     checkpoint = ModelCheckpoint(
-            filepath='./Model_denoise/CR_ML_Checkpoint.h5',
+            filepath=save_path + "/Model/CR_ML_Checkpoint.h5",
             save_best_only=True,
             verbose=1)
-    csv_logger = CSVLogger('./Model_denoise/training_log.csv')
+    csv_logger = CSVLogger(save_path + "/Model/training_log.csv")
 #     earlystop = EarlyStopping(monitor='val_loss', min_delta=0, patience=20,
 #                 verbose=1, mode='min', baseline=None, restore_best_weights=True)
     check_list.append(tensorboard_callback)
@@ -93,46 +97,46 @@ def ML_Training(input_train,input_test,source_train,source_test,EPOCH=100):
         )
 
     loss = model_generator.evaluate(input_test, source_test, verbose=0)
-    # print(training_history.history.keys())
-    model_generator.save("./Model_denoise/CR_ML.h5")
+    # logging.info(training_history.history.keys())
+    model_generator.save(save_path + "/Model/CR_ML.h5")
 
     loss = model_generator.evaluate(input_test, source_test,verbose=0)
-    print("{}: {:.5f}".format(model_generator.metrics_names[1],loss[1]))
-    print("{}: {:.5f}".format(model_generator.metrics_names[2],loss[2]))
-    print("{}: {:.5f}".format(model_generator.metrics_names[3],loss[3]))
-    print("{}: {:.5f}".format(model_generator.metrics_names[4],loss[4]))
+    logging.info("{}: {:.5f}".format(model_generator.metrics_names[1],loss[1]))
+    logging.info("{}: {:.5f}".format(model_generator.metrics_names[2],loss[2]))
+    logging.info("{}: {:.5f}".format(model_generator.metrics_names[3],loss[3]))
+    logging.info("{}: {:.5f}".format(model_generator.metrics_names[4],loss[4]))
     #######################################################################################################    
     ticks_2 = time.time()
     totaltime =  ticks_2 - ticks_1
-    print("\033[3;33mTime consumption : {:.4f} min\033[0;m".format(totaltime/60.))
+    logging.info("\033[3;33mTime consumption : {:.4f} min\033[0;m".format(totaltime/60.))
     
     
-def Load_ML_ML_Training(input_train,input_test,source_train,source_test,model_path, EPOCH = 250, BATCH = 256):
-    print(time.strftime("%a %b %d %H:%M:%S %Y", time.localtime()))
+def Load_ML_Training(input_train=[],input_test=[],source_train=[],source_test=[],model_path="model_path", EPOCH = 250, BATCH = 256, save_path="save_path"):
+    logging.info(time.strftime("%a %b %d %H:%M:%S %Y", time.localtime()))
     ticks_1 = time.time()
     ######################################################################################################
     """
     Create a directory to store model.
     """
-    if os.path.exists("./Model") == 0:
-        os.mkdir("./Model")
+    if os.path.exists(save_path + "/Model") == 0:
+        os.mkdir(save_path + "/Model")
     try:
         model_generator = load_model(model_path)
     except :
-        print("Please Check the Model Path!")
+        logging.info("Please Check the Model Path!")
         sys.exit(1)
     
     model_generator.summary()
 
     check_list=[]
     
-    tensorboard_callback = tf.keras.callbacks.TensorBoard(log_dir="./Model/log_test_2nd")
+    tensorboard_callback = tf.keras.callbacks.TensorBoard(log_dir=save_path + "/Model/log_test_2nd")
 #     lrate = LearningRateScheduler(my_fn.step_decay,verbose=1)
     checkpoint = ModelCheckpoint(
-            filepath='./Model/CR_ML_Checkpoint_2nd.h5',
+            filepath= save_path + "/Model/CR_ML_Checkpoint_2nd.h5",
             save_best_only=True,
             verbose=1)
-    csv_logger = CSVLogger('./Model/training_log_2nd.csv')
+    csv_logger = CSVLogger(save_path + "/Model/training_log_2nd.csv")
 #     earlystop = EarlyStopping(monitor='val_loss', min_delta=0, patience=20,
 #                 verbose=1, mode='min', baseline=None, restore_best_weights=True)
     check_list.append(tensorboard_callback)
@@ -155,15 +159,15 @@ def Load_ML_ML_Training(input_train,input_test,source_train,source_test,model_pa
         )
 
     loss = model_generator.evaluate(input_test, source_test, verbose=0)
-    # print(training_history.history.keys())
-    model_generator.save("./Model/CR_ML_2nd.h5")
+    # logging.info(training_history.history.keys())
+    model_generator.save(save_path + "/Model/CR_ML_2nd.h5")
 
     loss = model_generator.evaluate(input_test, source_test,verbose=0)
-    print("{}: {:.5f}".format(model_generator.metrics_names[1],loss[1]))
-    print("{}: {:.5f}".format(model_generator.metrics_names[2],loss[2]))
-    print("{}: {:.5f}".format(model_generator.metrics_names[3],loss[3]))
-    print("{}: {:.5f}".format(model_generator.metrics_names[4],loss[4]))
+    logging.info("{}: {:.5f}".format(model_generator.metrics_names[1],loss[1]))
+    logging.info("{}: {:.5f}".format(model_generator.metrics_names[2],loss[2]))
+    logging.info("{}: {:.5f}".format(model_generator.metrics_names[3],loss[3]))
+    logging.info("{}: {:.5f}".format(model_generator.metrics_names[4],loss[4]))
     #######################################################################################################    
     ticks_2 = time.time()
     totaltime =  ticks_2 - ticks_1
-    print("\033[3;33mTime consumption : {:.4f} min\033[0;m".format(totaltime/60.))
+    logging.info("\033[3;33mTime consumption : {:.4f} min\033[0;m".format(totaltime/60.))
