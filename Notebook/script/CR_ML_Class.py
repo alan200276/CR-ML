@@ -1033,8 +1033,8 @@ class Create_Pseudodata:
 
 
         for i in range(number):
-#             rand = np.random.randint(data.shape[0])
-            rand = i
+            rand = np.random.randint(data.shape[0])
+#             rand = i
 
             data_delta = np.zeros((84, 8))
             delta = float(np.random.uniform(LOW, HIGH, size=None)) #15, 30
