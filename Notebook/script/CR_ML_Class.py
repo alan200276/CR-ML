@@ -16,6 +16,14 @@ Mock_Data_to_NumpyArray
 """
 class Mock_Data_to_NumpyArray:
     def __init__(self, mock_data_file):
+        """
+        Usage: 
+            Mock_Data_to_NumpyArray("mock_data_file.txt")
+        Return:
+            Null
+        Item:
+            self.parameter, self.spectrum, self.chisq 
+        """
         import time
         logging.info(time.strftime("%a %b %d %H:%M:%S %Y", time.localtime()))
         ticks_1 = time.time()
@@ -57,7 +65,15 @@ class Mock_Data_to_NumpyArray:
 Mock_Data_Rescale
 """        
 class Mock_Data_Rescale:
-    def __init__(self, origin_parameter, new_parameter, spectrum, usedata = False):
+    def __init__(self, origin_parameter=[], new_parameter=[], spectrum=[], usedata = False):
+        """
+        Usage: 
+            Mock_Data_Rescale(origin_parameter=origin_parameter, new_parameter=new_parameter, spectrum=spectrum, usedata = False)
+        Return:
+            Null
+        Item:
+            self.data
+        """
         self.len = len(origin_parameter)
 
         self.origin_parameter = origin_parameter
@@ -102,7 +118,15 @@ class Mock_Data_Rescale:
 Mock_Data_Processing
 """
 class Mock_Data_Processing:
-    def __init__(self, parameter, E=0, Li=0, Be=0, B=0, C=0, O=0, data=0, usedata = False):
+    def __init__(self, parameter=[], E=0, Li=0, Be=0, B=0, C=0, O=0, data=0, usedata = False):
+        """
+        Usage: 
+            Mock_Data_Processing(parameter, E, Li, Be, B, C, O, data, usedata = False)
+        Return:
+            Null
+        Item:
+            Null
+        """
         self.len = len(parameter)
         self.E, self.Li, self.Be, self.B, self.C, self.O = E, Li, Be, B, C, O
         self.parameter = parameter
@@ -118,6 +142,14 @@ class Mock_Data_Processing:
         
             
     def spectrum_ratio(self, mock = True):
+        """
+        Usage: 
+            Mock_Data_Processing(parameter, E, Li, Be, B, C, O, data, usedata = False).spectrum_ratio(mock = True)
+        Return:
+            Null
+        Item:
+            self.total_data_in_ratio
+        """
         import time
         logging.info(time.strftime("%a %b %d %H:%M:%S %Y", time.localtime()))
         ticks_1 = time.time()
@@ -175,6 +207,14 @@ class Mock_Data_Processing:
         
         
     def Train_Test_split(self, splitrate = 0.1, split = True):
+        """
+        Usage: 
+            Mock_Data_Processing(parameter, E, Li, Be, B, C, O, data, usedata = False).Train_Test_split(splitrate = 0.1, split = True)
+        Return:
+            Null
+        Item:
+            self.input_train, self.input_test, self.source_train, self.source_test
+        """
         from sklearn.model_selection import train_test_split
         import random
         import time
@@ -279,8 +319,15 @@ class Mock_Data_Processing:
 Select_Sample
 """
 class Select_Sample:
-    def __init__(self, parameter, data, total_chisq_list, sigma):
-        
+    def __init__(self, parameter=[], data=[], total_chisq_list=[], sigma=[]):
+        """
+        Usage: 
+            Select_Sample(parameter, data, total_chisq_list, sigma)
+        Return:
+            Null
+        Item:
+            Null
+        """
         self.len = len(parameter)
         self.parameter = parameter
         self.data = data
@@ -288,6 +335,14 @@ class Select_Sample:
         self.sigma = sigma
         
     def Sample(self):
+        """
+        Usage: 
+            Select_Sample(parameter, data, total_chisq_list, sigma).Sample()
+        Return:
+            para_sigma, data_sigma, chi_sigma
+        Item:
+            Null
+        """
         import time
         ticks_1 = time.time()
         #######################################################################################################
@@ -349,7 +404,14 @@ Calculate_Chi_Square
 """
 class Calculate_Chi_Square:
     def __init__(self, E=[0], Li=0, Be=0, B=0, C=0, O=0, data=0, usedata = False):
-        
+        """
+        Usage: 
+            Calculate_Chi_Square(E, Li, Be, B, C, O, data, usedata = False)
+        Return:
+            Null
+        Item:
+            Null
+        """
         self.len = len(E)
         self.E, self.Li, self.Be, self.B, self.C, self.O = E, Li, Be, B, C, O
         if usedata == True:
@@ -357,6 +419,14 @@ class Calculate_Chi_Square:
             self.E, self.Li, self.Be, self.B, self.C, self.O = data[:,:,0], data[:,:,1],data[:,:,2],data[:,:,3],data[:,:,4],data[:,:,5]
         
     def chi_square(self):
+        """
+        Usage: 
+            Calculate_Chi_Square(E, Li, Be, B, C, O, data, usedata = False).chi_square()
+        Return:
+            total_chisq
+        Item:
+            Null
+        """
         from scipy import interpolate
         import time
         
@@ -453,13 +523,29 @@ class Calculate_Chi_Square:
 ReCalculateAp
 """
 class ReCalculateAp:
-    def __init__(self, data):
+    def __init__(self, data=[]:
+        """
+        Usage: 
+            ReCalculateAp(data)
+        Return:
+            Null
+        Item:
+            Null
+        """
         self.length = len(data)
         self.data = data
         self.E, self.Li, self.Be, self.B, self.C, self.O = data[:,:,0], data[:,:,1],data[:,:,2],data[:,:,3],data[:,:,4],data[:,:,5]
         self.ap_5, self.minchi = 0, 0
 
     def GetBestAp(self):
+        """
+        Usage: 
+            ReCalculateAp(data).GetBestAp()
+        Return:
+            Null
+        Item:
+            self.ap_5, self.minchi
+        """
         import time
         from scipy import interpolate
         
@@ -561,7 +647,15 @@ ReCalculateN
 """        
 class ReCalculateN:
     import time
-    def __init__(self, parameter,data, ap=1, ap_is1=False):
+    def __init__(self, parameter=[], data=[], ap=1, ap_is1=False):
+        """
+        Usage: 
+            ReCalculateN(parameter,data, ap=1, ap_is1=False)
+        Return:
+            Null
+        Item:
+            Null
+        """
         self.length = len(data)
         self.data = data
         self.parameter = parameter
@@ -571,6 +665,14 @@ class ReCalculateN:
         self.ap_is1 = ap_is1
     
     def GetBestN(self):
+        """
+        Usage: 
+            ReCalculateN(parameter,data, ap=1, ap_is1=False).GetBestN()
+        Return:
+            Null
+        Item:
+            self.new_factor, self.new_chi
+        """
         import time
         logging.info(time.strftime("%a %b %d %H:%M:%S %Y", time.localtime()))
         ticks_1 = time.time()
@@ -708,7 +810,15 @@ New_Parameter
 class  New_Parameter:
     import time
     
-    def __init__(self, parameter, new_factor, ap_5=1, index=0):
+    def __init__(self, parameter, new_factor, ap_5=1, ap_is1=False):
+        """
+        Usage: 
+            New_Parameter(parameter, new_factor, ap_5=1, ap_is1=False)
+        Return:
+            Null
+        Item:
+            self.new_parameter
+        """
         self.length = len(parameter)
         self.factor = new_factor
         self.parameter = parameter
@@ -716,11 +826,11 @@ class  New_Parameter:
         logging.info(time.strftime("%a %b %d %H:%M:%S %Y", time.localtime()))
         ticks_1 = time.time()
         #######################################################################################################
-        if index == 1 :
+        if ap_is1 == True :
             new_parameter = np.zeros((parameter.shape[0],14))
             new_parameter[:,0:11] = parameter[:,0:11]
             new_parameter[:,11:14] = new_factor
-        elif index == 0:
+        elif ap_is1 == False:
             new_parameter = np.zeros((parameter.shape[0],14))
             new_parameter[:,0:5] = parameter[:,0:5]
             new_parameter[:,5] = ap_5*5
@@ -779,7 +889,15 @@ class Recovery:
 Create_Pseudodata
 """
 class Create_Pseudodata:
-    def __init__(self, parameter, data, chi, LOW = 10 , HIGH = 30 , number = 100, index=0):
+    def __init__(self, parameter=[], data=[], chi=[], LOW = 10 , HIGH = 30 , number = 100, index=0):
+        """
+        Usage: 
+            Create_Pseudodata(parameter, data, chi, LOW = 10 , HIGH = 30 , number = 100, index=0)
+        Return:
+            Null
+        Item:
+            Null
+        """
         self.length = len(data)
         self.data = data
         self.parameter = parameter
@@ -792,6 +910,14 @@ class Create_Pseudodata:
         self.index = index
         
     def Create_Pseudodata(self):
+        """
+        Usage: 
+            Create_Pseudodata(parameter, data, chi, LOW = 10 , HIGH = 30 , number = 100, index=0).Create_Pseudodata()
+        Return:
+            normalfactor, pseudodata
+        Item:
+            Null
+        """
         data = self.data
         parameter = self.parameter
         chi = self.chi
